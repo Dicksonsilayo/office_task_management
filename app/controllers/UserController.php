@@ -1,162 +1,239 @@
-<?php
+    <?php
 
-require_once __DIR__ . '/../models/User.php';
-require_once __DIR__ . '/../configs/database.php';
-require_once __DIR__ . '/../core/Auth.php';
+    require_once __DIR__ . '/../models/User.php';
+    require_once __DIR__ . '/../configs/database.php';
+    require_once __DIR__ . '/../core/Auth.php';
+    require_once __DIR__ . '/../core/Guard.php';
 
-class UserController {
-
-    private $userModel;
-    private $db;
-
-    public function __construct() {
-
-        $this->userModel = new User();
-
-        $this->db = (new Database())->connect();
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | USER LIST
-    |--------------------------------------------------------------------------
-    */
-    public function index() {
-
-        $users = $this->userModel->getAll();
-
-        require __DIR__ . '/../views/user/index.php';
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | CREATE FORM
-    |--------------------------------------------------------------------------
-    */
-    public function create() {
-
-        $departments = $this->db
-            ->query("SELECT * FROM departments")
-            ->fetch_all(MYSQLI_ASSOC);
-
-        $roles = $this->db
-            ->query("SELECT * FROM roles")
-            ->fetch_all(MYSQLI_ASSOC);
-
-        // IMPORTANT
-        // Prevent logged-in user data leaking into create form
-        $user = null;
-
-        require __DIR__ . '/../views/user/create.php';
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | STORE USER
-    |--------------------------------------------------------------------------
-    */
-    public function store() {
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-            // PASSWORD VALIDATION
-            if ($_POST['password'] !== $_POST['confirm_password']) {
-
-                $_SESSION['error'] = "Passwords do not match";
-
-                header("Location: index.php?page=create_user");
-                exit;
-            }
-
-            $this->userModel->create($_POST);
-
-            $_SESSION['success'] = "User created successfully";
-
-            header("Location: index.php?page=users");
-            exit;
-        }
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | EDIT USER
-    |--------------------------------------------------------------------------
-    */public function edit()
-{
-    Auth::requireLogin();
-
-    if (!isset($_GET['id'])) {
-        die("User ID missing");
-    }
-
-    $userModel = new User();
-
-    // IMPORTANT: DO NOT USE Auth::user() HERE
-    $editUser = $userModel->find($_GET['id']);
-
-    if (!$editUser) {
-        die("User not found");
-    }
-
-    require __DIR__ . '/../views/user/edit.php';
-}
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE USER
-    |--------------------------------------------------------------------------
-    */
-    public function update()
+    class UserController
     {
-        Auth::requireLogin();
+        private $userModel;
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-            // PASSWORD CHECK
-            if (
-                !empty($_POST['password']) &&
-                $_POST['password'] !== $_POST['confirm_password']
-            ) {
-
-                $_SESSION['error'] = "Passwords do not match";
-
-                header("Location: index.php?page=edit_user&id=" . $_POST['id']);
-                exit;
-            }
-
-            $this->userModel->update([
-                'id' => $_POST['id'],
-                'name' => $_POST['name'],
-                'email' => $_POST['email'],
-                'password' => $_POST['password'] ?? '',
-                'department_id' => $_POST['department_id'] ?? null,
-                'role_id' => $_POST['role_id'] ?? null
-            ]);
-
-            $_SESSION['success'] = "User updated successfully";
-
-            header("Location: index.php?page=users");
-            exit;
+        public function __construct()
+        {
+            $this->userModel = new User();
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | LIST USERS
+        |--------------------------------------------------------------------------
+        */
+        public function index()
+        {
+            Guard::adminOnly(); // ONLY admin sees users
+
+            $users = $this->userModel->getAll();
+
+            require __DIR__ . '/../views/user/index.php';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE FORM
+        |--------------------------------------------------------------------------
+        */
+        public function create()
+        {
+            Guard::adminOnly();
+
+            $db = (new Database())->connect();
+
+            $departments = $db->query("SELECT * FROM departments")->fetch_all(MYSQLI_ASSOC);
+            $roles = $db->query("SELECT * FROM roles")->fetch_all(MYSQLI_ASSOC);
+
+            require __DIR__ . '/../views/user/create.php';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | STORE USER
+        |--------------------------------------------------------------------------
+        */public function store()
+{
+    Guard::adminOnly();
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+
+    // =========================
+    // SANITIZE INPUT
+    // =========================
+    $name = trim($_POST['name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm = $_POST['confirm_password'] ?? '';
+    $department_id = $_POST['department_id'] ?? null;
+    $role_id = $_POST['role_id'] ?? null;
+
+    // =========================
+    // VALIDATION
+    // =========================
+    if (strlen($name) < 3 || strlen($name) > 100) {
+        $_SESSION['error'] = "Name must be between 3 and 100 characters";
+        header("Location: index.php?page=create_user");
+        exit;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE USER
-    |--------------------------------------------------------------------------
-    */
-    public function delete() {
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['error'] = "Invalid email format";
+        header("Location: index.php?page=create_user");
+        exit;
+    }
 
-        if (!isset($_GET['id'])) {
-            die("User ID missing");
+    if (strlen($email) > 150) {
+        $_SESSION['error'] = "Email too long";
+        header("Location: index.php?page=create_user");
+        exit;
+    }
+
+    if (strlen($password) < 6 || strlen($password) > 50) {
+        $_SESSION['error'] = "Password must be 6–50 characters";
+        header("Location: index.php?page=create_user");
+        exit;
+    }
+
+    if ($password !== $confirm) {
+        $_SESSION['error'] = "Passwords do not match";
+        header("Location: index.php?page=create_user");
+        exit;
+    }
+
+    if (!is_numeric($department_id) || !is_numeric($role_id)) {
+        $_SESSION['error'] = "Invalid department or role";
+        header("Location: index.php?page=create_user");
+        exit;
+    }
+
+    // =========================
+    // FINAL SAFE DATA
+    // =========================
+    $data = [
+        'name' => htmlspecialchars($name),
+        'email' => strtolower($email),
+        'password' => $password,
+        'department_id' => (int)$department_id,
+        'role_id' => (int)$role_id
+    ];
+
+    $this->userModel->create($data);
+
+    $_SESSION['success'] = "User created successfully";
+
+    header("Location: index.php?page=users");
+    exit;
+}
+
+        /*
+        |--------------------------------------------------------------------------
+        | EDIT USER
+        |--------------------------------------------------------------------------
+        */
+        public function edit()
+        {
+            Guard::adminOnly();
+
+            if (!isset($_GET['id'])) {
+                die("User ID missing");
+            }
+
+            $editUser = $this->userModel->find($_GET['id']);
+
+            if (!$editUser) {
+                die("User not found");
+            }
+
+            $db = (new Database())->connect();
+
+            $departments = $db->query("SELECT * FROM departments")->fetch_all(MYSQLI_ASSOC);
+            $roles = $db->query("SELECT * FROM roles")->fetch_all(MYSQLI_ASSOC);
+
+            require __DIR__ . '/../views/user/edit.php';
         }
 
-        $id = $_GET['id'];
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE USER
+        |--------------------------------------------------------------------------
+        */public function update()
+{
+    Guard::adminOnly();
 
-        $this->userModel->delete($id);
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
-        $_SESSION['success'] = "User deleted successfully";
+    $id = (int)($_POST['id'] ?? 0);
+    $name = trim($_POST['name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm = $_POST['confirm_password'] ?? '';
+    $department_id = $_POST['department_id'] ?? null;
+    $role_id = $_POST['role_id'] ?? null;
 
+    if ($id <= 0) {
+        $_SESSION['error'] = "Invalid user ID";
         header("Location: index.php?page=users");
         exit;
     }
+
+    if (strlen($name) < 3 || strlen($name) > 100) {
+        $_SESSION['error'] = "Invalid name length";
+        header("Location: index.php?page=edit_user&id=$id");
+        exit;
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['error'] = "Invalid email";
+        header("Location: index.php?page=edit_user&id=$id");
+        exit;
+    }
+
+    if (!empty($password)) {
+
+        if (strlen($password) < 6) {
+            $_SESSION['error'] = "Password too short";
+            header("Location: index.php?page=edit_user&id=$id");
+            exit;
+        }
+
+        if ($password !== $confirm) {
+            $_SESSION['error'] = "Passwords do not match";
+            header("Location: index.php?page=edit_user&id=$id");
+            exit;
+        }
+    }
+
+    $this->userModel->update([
+        'id' => $id,
+        'name' => htmlspecialchars($name),
+        'email' => strtolower($email),
+        'password' => $password,
+        'department_id' => (int)$department_id,
+        'role_id' => (int)$role_id
+    ]);
+
+    $_SESSION['success'] = "User updated successfully";
+
+    header("Location: index.php?page=users");
+    exit;
 }
+
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE USER
+        |--------------------------------------------------------------------------
+        */
+        public function delete()
+        {
+            Guard::adminOnly();
+
+            if (!isset($_GET['id'])) {
+                die("User ID missing");
+            }
+
+            $this->userModel->delete($_GET['id']);
+
+            $_SESSION['success'] = "User deleted successfully";
+
+            header("Location: index.php?page=users");
+            exit;
+        }
+    }

@@ -6,22 +6,24 @@ class Auth {
 
     public static function user()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         if (!isset($_SESSION['user_id'])) {
             return null;
         }
 
-        static $cache = null;
-
-        if ($cache !== null) return $cache;
-
         $userModel = new User();
-        $cache = $userModel->find($_SESSION['user_id']);
-
-        return $cache;
+        return $userModel->find($_SESSION['user_id']);
     }
 
     public static function check()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         return isset($_SESSION['user_id']);
     }
 
@@ -35,14 +37,21 @@ class Auth {
 
     public static function login($user)
     {
-        session_regenerate_id(true);
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
         $_SESSION['user_id'] = $user['id'];
+        $_SESSION['role'] = $user['role'];
     }
 
     public static function logout()
     {
-        $_SESSION = [];
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        session_unset();
         session_destroy();
     }
 }

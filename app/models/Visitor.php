@@ -15,18 +15,33 @@ class Visitor {
     |--------------------------------------------------------------------------
     | GET ALL VISITORS
     |--------------------------------------------------------------------------
-    */
-    public function getAll() {
+    */public function getAll()
+{
+    $stmt = $this->conn->query("
+        SELECT 
+            visitors.*,
+            users.name AS visitor_name
+        FROM visitors
+        LEFT JOIN users ON users.id = visitors.user_id
+        ORDER BY visitors.created_at DESC
+    ");
 
-        $result = $this->conn->query("
-            SELECT *
-            FROM visitors
-            ORDER BY id DESC
-        ");
+    return $stmt->fetch_all(MYSQLI_ASSOC);
+}
+public function getToday()
+{
+    $stmt = $this->conn->query("
+        SELECT 
+            visitors.*,
+            users.name AS visitor_name
+        FROM visitors
+        LEFT JOIN users ON users.id = visitors.user_id
+        WHERE DATE(visitors.created_at) = CURDATE()
+        ORDER BY visitors.created_at DESC
+    ");
 
-        return $result->fetch_all(MYSQLI_ASSOC);
-    }
-
+    return $stmt->fetch_all(MYSQLI_ASSOC);
+}
     /*
     |--------------------------------------------------------------------------
     | CREATE VISITOR

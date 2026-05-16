@@ -41,27 +41,61 @@ class GoalController {
     |--------------------------------------------------------------------------
     | STORE GOAL
     |--------------------------------------------------------------------------
-    */
-    public function store() {
+    */public function store()
+{
+    Auth::requireLogin();
 
-        Auth::requireLogin();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $name = trim($_POST['name']);
+        $description = trim($_POST['description'] ?? '');
 
-            $data = [
-                'name' => $_POST['name'],
-                'description' => $_POST['description'] ?? null,
-                'department_id' => $_POST['department_id'] ?? null,
-                'created_by' => Auth::user()['id']
-            ];
+        // -------------------------
+        // VALIDATION ERRORS ARRAY
+        // -------------------------
+        $errors = [];
 
-            $this->goalModel->create($data);
+        // NAME VALIDATION
+        if (empty($name)) {
+            $errors[] = "Goal name is required";
+        } elseif (strlen($name) > 100) {
+            $errors[] = "Goal name must not exceed 100 characters";
+        }
 
-            header("Location: index.php?page=goals");
+        // DESCRIPTION VALIDATION
+        if (strlen($description) > 500) {
+            $errors[] = "Description must not exceed 500 characters";
+        }
+
+        // -------------------------
+        // IF ERRORS FOUND
+        // -------------------------
+        if (!empty($errors)) {
+
+            $_SESSION['error'] = implode("<br>", $errors);
+
+            header("Location: index.php?page=create_goal");
             exit;
         }
-    }
 
+        // -------------------------
+        // INSERT DATA
+        // -------------------------
+        $data = [
+            'name' => $name,
+            'description' => $description,
+            'department_id' => $_POST['department_id'] ?? null,
+            'created_by' => Auth::user()['id']
+        ];
+
+        $this->goalModel->create($data);
+
+        $_SESSION['success'] = "Goal created successfully";
+
+        header("Location: index.php?page=goals");
+        exit;
+    }
+}
     /*
     |--------------------------------------------------------------------------
     | DELETE GOAL

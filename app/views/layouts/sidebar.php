@@ -1,12 +1,12 @@
 <?php
-
 require_once __DIR__ . '/../../core/Auth.php';
 
 $user = Auth::user();
 
 if (!$user) return;
 
-$role = strtolower($authUser['role'] ?? 'staff');
+$role = strtolower($user['role'] ?? 'staff');
+
 $active = $_GET['page'] ?? 'dashboard';
 ?>
 

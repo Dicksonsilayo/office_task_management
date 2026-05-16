@@ -35,55 +35,56 @@
         |--------------------------------------------------------------------------
         | GET ALL TASKS
         |--------------------------------------------------------------------------
-        */public function getAllByRole($user)
-    {
-        $role = strtolower($user['role'] ?? '');
-        $userId = $user['id'];
-        $deptId = $user['department_id'];
+        *//*
+|--------------------------------------------------------------------------
+| GET TASKS BASED ON USER ROLE
+|--------------------------------------------------------------------------
+*/public function getAllByRole($user)
+{
+    $role = strtolower($user['role'] ?? '');
+    $userId = $user['id'];
+    $deptId = $user['department_id'];
 
-        $stmt = null;
-
-        if ($role === 'admin') {
-
-            $result = $this->conn->query("
-                SELECT * FROM tasks ORDER BY id DESC
-            ");
-
-            return $result->fetch_all(MYSQLI_ASSOC);
-        }
-
-        if ($role === 'hod') {
-
-            $stmt = $this->conn->prepare("
-                SELECT * FROM tasks 
-                WHERE department_id = ?
-                ORDER BY id DESC
-            ");
-
-            $stmt->bind_param("i", $deptId);
-            $stmt->execute();
-        }
-
-        if ($role === 'staff') {
-
-            $stmt = $this->conn->prepare("
-                SELECT * FROM tasks 
-                WHERE assigned_to = ?
-                ORDER BY id DESC
-            ");
-
-            $stmt->bind_param("i", $userId);
-            $stmt->execute();
-        }
-
-        return $stmt
-            ? $stmt->get_result()->fetch_all(MYSQLI_ASSOC)
-            : [];
+    // ADMIN → all tasks
+    if ($role === 'admin') {
+        $stmt = $this->conn->query("
+            SELECT * FROM tasks ORDER BY id DESC
+        ");
+        return $stmt->fetch_all(MYSQLI_ASSOC);
     }
 
+    // HOD → department tasks ONLY (must not be null department_id)
+    if ($role === 'hod') {
 
+        $stmt = $this->conn->prepare("
+            SELECT * FROM tasks 
+            WHERE department_id = ?
+            ORDER BY id DESC
+        ");
 
-        public function getOverdueTasks()
+        $stmt->bind_param("i", $deptId);
+        $stmt->execute();
+
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // STAFF → assigned tasks ONLY (SAFE NULL HANDLING FIX)
+    if ($role === 'staff') {
+
+        $stmt = $this->conn->prepare("
+            SELECT * FROM tasks 
+            WHERE assigned_to = ?
+            ORDER BY id DESC
+        ");
+
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    return [];
+}      public function getOverdueTasks()
     {
         $stmt = $this->conn->query("
             SELECT * FROM tasks
@@ -178,29 +179,41 @@
 
             return $stmt->execute();
         }
-        public function create($data) {
+        
+        public function create($data)
+{
+    $stmt = $this->conn->prepare("
+        INSERT INTO tasks (
+            title,
+            description,
+            priority,
+            deadline,
+            notes,
+            assigned_by,
+            assigned_to,
+            goal_id,
+            status,
+            department_id
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
 
-        $stmt = $this->conn->prepare("
-            INSERT INTO tasks 
-            (title, description, priority, deadline, notes, assigned_by, assigned_to, goal_id, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
+    $stmt->bind_param(
+        "sssssiissi",
+        $data['title'],
+        $data['description'],
+        $data['priority'],
+        $data['deadline'],
+        $data['notes'],
+        $data['assigned_by'],
+        $data['assigned_to'],
+        $data['goal_id'],
+        $data['status'],
+        $data['department_id']
+    );
 
-        $stmt->bind_param(
-            "sssssiiss",
-            $data['title'],
-            $data['description'],
-            $data['priority'],
-            $data['deadline'],
-            $data['notes'],
-            $data['assigned_by'],
-            $data['assigned_to'],
-            $data['goal_id'],
-            $data['status']
-        );
-
-        return $stmt->execute();
-    }
+    return $stmt->execute();
+}
     public function getByDepartment($deptId)
     {
         $stmt = $this->conn->prepare("

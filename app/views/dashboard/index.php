@@ -6,17 +6,17 @@
 
     <div class="card">
         <h3>Total Users</h3>
-        <p><?= $data['totalUsers'] ?? []; ?></p>
+        <p><?= $data['totalUsers'] ?? 0; ?></p>
     </div>
 
     <div class="card">
         <h3>Total Visitors</h3>
-        <p><?= $data['totalVisitors'] ?? []; ?></p>
+        <p><?= $data['totalVisitors'] ?? 0; ?></p>
     </div>
 
     <div class="card">
         <h3>Total Tasks</h3>
-        <p><?= $data['totalTasks'] ?? []; ?></p>
+        <p><?= $data['totalTasks'] ?? 0; ?></p>
     </div>
 
 </div>

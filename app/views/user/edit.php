@@ -1,9 +1,11 @@
-<?php 
+<?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
-// print_r($user);
-// die('');
-
-require_once __DIR__ . '/../layouts/header.php'; ?>
+<?php
+// SAFETY FALLBACKS (prevents undefined variable crashes)
+$editUser = $editUser ?? [];
+$departments = $departments ?? [];
+$roles = $roles ?? [];
+?>
 
 <div class="form-page">
 
@@ -15,90 +17,110 @@ require_once __DIR__ . '/../layouts/header.php'; ?>
         </div>
 
         <!-- SUCCESS MESSAGE -->
-        <?php if(isset($_SESSION['success'])): ?>
-
+        <?php if (!empty($_SESSION['success'])): ?>
             <div class="alert-success">
-                <?= $_SESSION['success']; ?>
+                <?= $_SESSION['success']; unset($_SESSION['success']); ?>
             </div>
-
-            <?php unset($_SESSION['success']); ?>
-
         <?php endif; ?>
 
         <!-- ERROR MESSAGE -->
-        <?php if(isset($_SESSION['error'])): ?>
-
+        <?php if (!empty($_SESSION['error'])): ?>
             <div class="alert-error">
-                <?= $_SESSION['error']; ?>
+                <?= $_SESSION['error']; unset($_SESSION['error']); ?>
             </div>
-
-            <?php unset($_SESSION['error']); ?>
-
         <?php endif; ?>
 
         <form method="POST" action="index.php?page=update_user">
 
-            <input
-                type="hidden"
-                name="id"
-                value="<?= $user['id'] ?? '' ?>"
-            >
+            <input type="hidden" name="id"
+                   value="<?= htmlspecialchars($editUser['id'] ?? '') ?>">
 
             <!-- NAME -->
             <div class="form-group">
-
                 <label>Full Name</label>
-
-                <input
-                    type="text"
-                    name="name"
-                    value="<?= htmlspecialchars($user['name'] ?? '') ?>"
-                    required
-                >
-
+                <input type="text"
+                       name="name"
+                       value="<?= htmlspecialchars($editUser['name'] ?? '') ?>"
+                       required>
             </div>
 
             <!-- EMAIL -->
             <div class="form-group">
-
                 <label>Email</label>
+                <input type="email"
+                       name="email"
+                       value="<?= htmlspecialchars($editUser['email'] ?? '') ?>"
+                       required>
+            </div>
 
-                <input
-                    type="email"
-                    name="email"
-                    value="<?= htmlspecialchars($user['email'] ?? '') ?>"
-                    required
-                >
+            <!-- DEPARTMENT -->
+            <div class="form-group">
+                <label>Department</label>
 
+                <select name="department_id" required>
+
+                    <option value="">-- Select Department --</option>
+
+                    <?php foreach ($departments as $department): ?>
+
+                        <?php
+                            $selected = (
+                                isset($editUser['department_id']) &&
+                                $editUser['department_id'] == $department['id']
+                            ) ? 'selected' : '';
+                        ?>
+
+                        <option value="<?= $department['id'] ?>" <?= $selected ?>>
+                            <?= htmlspecialchars($department['name']) ?>
+                        </option>
+
+                    <?php endforeach; ?>
+
+                </select>
+            </div>
+
+            <!-- ROLE -->
+            <div class="form-group">
+                <label>Role</label>
+
+                <select name="role_id" required>
+
+                    <option value="">-- Select Role --</option>
+
+                    <?php foreach ($roles as $role): ?>
+
+                        <?php
+                            $selected = (
+                                isset($editUser['role_id']) &&
+                                $editUser['role_id'] == $role['id']
+                            ) ? 'selected' : '';
+                        ?>
+
+                        <option value="<?= $role['id'] ?>" <?= $selected ?>>
+                            <?= htmlspecialchars($role['name']) ?>
+                        </option>
+
+                    <?php endforeach; ?>
+
+                </select>
             </div>
 
             <!-- PASSWORD -->
             <div class="form-group">
-
                 <label>New Password</label>
-
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="Leave blank to keep old password"
-                >
-
+                <input type="password"
+                       name="password"
+                       placeholder="Leave blank to keep current password">
             </div>
 
             <!-- CONFIRM PASSWORD -->
             <div class="form-group">
-
                 <label>Confirm Password</label>
-
-                <input
-                    type="password"
-                    name="confirm_password"
-                    placeholder="Confirm new password"
-                >
-
+                <input type="password"
+                       name="confirm_password"
+                       placeholder="Confirm new password">
             </div>
 
-            <!-- BUTTON -->
             <button class="btn-submit" type="submit">
                 Update User
             </button>
@@ -110,7 +132,6 @@ require_once __DIR__ . '/../layouts/header.php'; ?>
 </div>
 
 <style>
-
 .alert-success{
     background:#dcfce7;
     color:#166534;
@@ -128,7 +149,6 @@ require_once __DIR__ . '/../layouts/header.php'; ?>
     margin-bottom:20px;
     font-weight:bold;
 }
-
 </style>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

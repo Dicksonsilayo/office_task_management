@@ -1,8 +1,8 @@
 <?php
-// require_once __DIR__ . '/../../core/Auth.php';
+require_once __DIR__ . '/../../core/Auth.php';
 
- $authUser = Auth::user();
-// $role = strtolower($authUser['role'] ?? 'staff');
+$authUser = Auth::user(); // SINGLE SOURCE OF TRUTH
+$role = strtolower($authUser['role'] ?? 'guest');
 ?>
 
 <!DOCTYPE html>
@@ -17,10 +17,6 @@
 
 <div class="container">
 
-    <!-- SIDEBAR -->
-    <?php 
-    require_once __DIR__ . '/sidebar.php'; 
-    ?>
+    <?php require_once __DIR__ . '/sidebar.php'; ?>
 
-    <!-- MAIN CONTENT -->
     <div class="main-content">

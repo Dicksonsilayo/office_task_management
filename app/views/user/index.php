@@ -1,126 +1,72 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
-<?php
-// MUST be passed from controller
-// $users = list of users
-?>
-
 <div class="page-header">
-
     <div>
-
         <h1>Users Management</h1>
-
-        <p class="page-subtitle">
-            Manage all system users
-        </p>
-
     </div>
 
-    <a href="index.php?page=create_user" class="btn-primary">  
-        + Create User
-    </a>
-
+    <a href="index.php?page=create_user" class="btn-primary">+ Create User</a>
 </div>
 
 <div class="table-container">
 
-    <table class="modern-table">
+<table class="modern-table">
 
-        <thead>
+<thead>
+<tr>
+    <th>#</th>
+    <th>User</th>
+    <th>Email</th>
+    <th>Department</th>
+    <th>Role</th>
+    <th>Actions</th>
+</tr>
+</thead>
 
-            <tr>
+<tbody>
 
-                <th>#</th>
-                <th>User</th>
-                <th>Email</th>
-                <th>Department</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Actions</th>
+<?php if (!empty($users)): ?>
 
-            </tr>
+    <?php $i = 1; foreach ($users as $u): ?>
 
-        </thead>
+    <tr>
 
-        <tbody>
+        <td><?= $i++; ?></td>
 
-            <?php if (!empty($users)): ?>
+        <td>
+            <div class="user-info">
+                <div class="avatar">
+                    <?= strtoupper(substr($u['name'], 0, 1)); ?>
+                </div>
 
-                <?php $count = 1; ?>
+                <strong><?= htmlspecialchars($u['name']); ?></strong>
+            </div>
+        </td>
 
-                <?php foreach ($users as $user): ?>
+        <td><?= htmlspecialchars($u['email']); ?></td>
 
-                    <tr>
+        <td><?= htmlspecialchars($u['department_id'] ?? 'N/A'); ?></td>
 
-                        <td><?= $count++; ?></td>
+        <td><?= htmlspecialchars($u['role'] ?? 'Staff'); ?></td>
 
-                        <td>
-                            <div class="user-info">
+        <td>
+            <a href="index.php?page=edit_user&id=<?= $u['id'] ?>" class="btn-edit">Edit</a>
+            <a href="index.php?page=delete_user&id=<?= $u['id'] ?>" class="btn-delete">Delete</a>
+        </td>
 
-                                <div class="avatar">
-                                    <?= strtoupper(substr($user['name'], 0, 1)); ?>
-                                </div>
+    </tr>
 
-                                <div>
-                                    <strong>
-                                        <?= htmlspecialchars($user['name']); ?>
-                                    </strong>
-                                </div>
+    <?php endforeach; ?>
 
-                            </div>
-                        </td>
+<?php else: ?>
 
-                        <td>
-                            <?= htmlspecialchars($user['email']); ?>
-                        </td>
+<tr><td colspan="6">No users found</td></tr>
 
-                        <td>
-                            <?= htmlspecialchars($user['department_id'] ?? 'N/A'); ?>
-                        </td>
+<?php endif; ?>
 
-                        <td>
-                            <span class="role-badge">
-                                <?= ucfirst($user['role_name'] ?? 'Staff'); ?>
-                            </span>
-                        </td>
+</tbody>
 
-                        <td>
-                            <span class="status-active">Active</span>
-                        </td>
-
-                        <td>
-
-                            <a href="index.php?page=edit_user&id=<?= $user['id'] ?>" 
-                               class="btn-edit">
-                                Edit
-                            </a>
-
-                            <a href="index.php?page=delete_user&id=<?= $user['id'] ?>" 
-                               onclick="return confirm('Delete this user?')" 
-                               class="btn-delete">
-                                Delete
-                            </a>
-
-                        </td>
-
-                    </tr>
-
-                <?php endforeach; ?>
-
-            <?php else: ?>
-
-                <tr>
-                    <td colspan="7" class="empty-state">
-                        No users found
-                    </td>
-                </tr>
-
-            <?php endif; ?>
-
-        </tbody>
-
-    </table>
+</table>
 
 </div>
 

@@ -1,10 +1,7 @@
 <?php
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-class Session {
-
+class Session
+{
     public static function start()
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -22,14 +19,8 @@ class Session {
         return $_SESSION[$key] ?? null;
     }
 
-    public static function has($key)
-    {
-        return isset($_SESSION[$key]);
-    }
-
     public static function destroy()
     {
-        session_unset();
         session_destroy();
     }
 }

@@ -1,36 +1,43 @@
 <?php
 
 require_once __DIR__ . '/../core/Auth.php';
-require_once __DIR__ . '/../models/Dashboard.php';
+require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/Task.php';
+require_once __DIR__ . '/../models/Visitor.php';
 
-class DashboardController {
-
+class DashboardController
+{
     public function index()
     {
         Auth::requireLogin();
 
         $authUser = Auth::user();
-        $role = strtolower($authUser['role'] ?? 'staff');
 
-        $dashboard = new Dashboard();
+        $userModel = new User();
+        $taskModel = new Task();
+        $visitorModel = new Visitor();
 
         $data = [
             'user' => $authUser,
-            'totalUsers' => $dashboard->totalUsers(),
-            'totalTasks' => $dashboard->totalTasks(),
-            'totalVisitors' => $dashboard->totalVisitors(),
+            'totalUsers' => count($userModel->getAll()),
+            'totalTasks' => count($taskModel->getAllByRole($authUser)),
+            'totalVisitors' => count($visitorModel->getAll()),
         ];
 
-        if ($role === 'admin') {
+        // ROLE-BASED DASHBOARD ROUTING
+        if ($authUser['role'] === 'admin') {
             require __DIR__ . '/../views/dashboard/index.php';
+        }
 
-        } elseif ($role === 'hod') {
-            require __DIR__ . '/../views/dashboard/head.php';
+        elseif ($authUser['role'] === 'hod') {
+            require __DIR__ . '/../views/dashboard/hod.php';
+        }
 
-        } elseif ($role === 'receptionist') {
+        elseif ($authUser['role'] === 'receptionist') {
             require __DIR__ . '/../views/dashboard/receptionist.php';
+        }
 
-        } else {
+        else {
             require __DIR__ . '/../views/dashboard/staff.php';
         }
     }

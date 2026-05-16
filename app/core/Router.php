@@ -3,13 +3,18 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+/*
+|--------------------------------------------------------------------------
+| CORE DEPENDENCIES (LOAD ONCE ONLY)
+|--------------------------------------------------------------------------
+*/
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/Guard.php';
 
-class Router {
-
-    public function route() {
-
+class Router
+{
+    public function route()
+    {
         $page = $_GET['page'] ?? 'login';
 
         switch ($page) {
@@ -31,17 +36,14 @@ class Router {
 
             /*
             |--------------------------------------------------------------------------
-            | DASHBOARD (ALL USERS)
+            | DASHBOARD
             |--------------------------------------------------------------------------
             */
             case 'dashboard':
-                Auth::requireLogin();
+                Guard::auth();
                 require_once __DIR__ . '/../controllers/DashboardController.php';
                 (new DashboardController())->index();
                 break;
-
-                
-    
 
             /*
             |--------------------------------------------------------------------------
@@ -127,95 +129,100 @@ class Router {
 
             /*
             |--------------------------------------------------------------------------
-            | TASKS (ADMIN + HOD + STAFF VIEW)
+            | TASKS (ALL LOGGED USERS)
             |--------------------------------------------------------------------------
             */
             case 'tasks':
-                Auth::requireLogin();
+                Guard::auth();
                 require_once __DIR__ . '/../controllers/TaskController.php';
                 (new TaskController())->index();
                 break;
 
             case 'task_show':
-                Auth::requireLogin();
+                Guard::auth();
                 require_once __DIR__ . '/../controllers/TaskController.php';
                 (new TaskController())->show();
                 break;
 
             /*
             |--------------------------------------------------------------------------
-            | TASK MANAGEMENT (ADMIN + HOD ONLY)
+            | TASK MANAGEMENT (ADMIN + HOD)
             |--------------------------------------------------------------------------
             */
-   
-case 'create_task':
-    Guard::adminOrHod();
-    require_once __DIR__ . '/../controllers/TaskController.php';
-    (new TaskController())->create();
-    break;
+            case 'create_task':
+                Guard::adminOrHod();
+                require_once __DIR__ . '/../controllers/TaskController.php';
+                (new TaskController())->create();
+                break;
 
-case 'store_task':
-    Guard::adminOrHod();
-    require_once __DIR__ . '/../controllers/TaskController.php';
-    (new TaskController())->store();
-    break;
-
+            case 'store_task':
+                Guard::adminOrHod();
+                require_once __DIR__ . '/../controllers/TaskController.php';
+                (new TaskController())->store();
+                break;
 
             case 'update_task_status':
-                Auth::requireLogin();
+                Guard::auth();
                 require_once __DIR__ . '/../controllers/TaskController.php';
                 (new TaskController())->updateStatus();
                 break;
 
             case 'add_comment':
-                Auth::requireLogin();
+                Guard::auth();
                 require_once __DIR__ . '/../controllers/TaskController.php';
                 (new TaskController())->addComment();
                 break;
 
             /*
             |--------------------------------------------------------------------------
-            | GOALS (ADMIN + HOD)
+            | GOALS
             |--------------------------------------------------------------------------
             */
-           case 'goals':
-    Guard::adminOrHod();
-    require_once __DIR__ . '/../controllers/GoalController.php';
-    (new GoalController())->index();
-    break;
+            case 'goals':
+                Guard::adminOrHod();
+                require_once __DIR__ . '/../controllers/GoalController.php';
+                (new GoalController())->index();
+                break;
 
-case 'create_goal':
-    Guard::adminOrHod();
-    require_once __DIR__ . '/../controllers/GoalController.php';
-    (new GoalController())->create();
-    break;
+            case 'create_goal':
+                Guard::adminOrHod();
+                require_once __DIR__ . '/../controllers/GoalController.php';
+                (new GoalController())->create();
+                break;
 
-case 'store_goal':
-    Guard::adminOrHod();
-    require_once __DIR__ . '/../controllers/GoalController.php';
-    (new GoalController())->store();
-    break;
+            case 'store_goal':
+                Guard::adminOrHod();
+                require_once __DIR__ . '/../controllers/GoalController.php';
+                (new GoalController())->store();
+                break;
 
-case 'delete_goal':
-    Guard::adminOrHod();
-    require_once __DIR__ . '/../controllers/GoalController.php';
-    (new GoalController())->delete();
-    break;
-    case 'notifications':
-    Auth::requireLogin();
-    require_once __DIR__ . '/../controllers/NotificationController.php';
-    (new NotificationController())->index();
-    break;
+            case 'delete_goal':
+                Guard::adminOrHod();
+                require_once __DIR__ . '/../controllers/GoalController.php';
+                (new GoalController())->delete();
+                break;
 
-case 'mark_notification_read':
-    Auth::requireLogin();
-    require_once __DIR__ . '/../controllers/NotificationController.php';
-    (new NotificationController())->read();
-    break;
-    case 'api_notifications':
-    require_once __DIR__ . '/../controllers/api/NotificationApi.php';
-    break;
-    
+            /*
+            |--------------------------------------------------------------------------
+            | NOTIFICATIONS
+            |--------------------------------------------------------------------------
+            */
+            case 'notifications':
+                Guard::auth();
+                require_once __DIR__ . '/../controllers/NotificationController.php';
+                (new NotificationController())->index();
+                break;
+
+            case 'mark_notification_read':
+                Guard::auth();
+                require_once __DIR__ . '/../controllers/NotificationController.php';
+                (new NotificationController())->read();
+                break;
+
+            case 'api_notifications':
+                require_once __DIR__ . '/../controllers/api/NotificationApi.php';
+                break;
+
             /*
             |--------------------------------------------------------------------------
             | DEFAULT
