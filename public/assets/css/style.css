@@ -7,6 +7,90 @@ body {
 .container {
     display: flex;
 }
+/* GRID FIX (no ugly stacking feel) */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    align-items: start;
+}
+
+/* CARD IMPROVED */
+.card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    transition: 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+}
+
+/* BUTTON GROUP (VISITORS TABS) */
+.btn-group {
+    display: flex;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.small-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #e5e7eb;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.small-btn:hover {
+    background: #cbd5e1;
+}
+
+.small-btn.active {
+    background: #2563eb;
+    color: white;
+}
+
+/* TAB SYSTEM */
+.tab-content {
+    display: none;
+    margin-top: 10px;
+}
+
+.active-tab {
+    display: block;
+}
+
+/* DROPDOWN ITEMS CLEANER */
+
+.dropdown-content {
+    display: none;
+    margin-top: 12px;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    max-height: 260px;
+    overflow-y: auto;
+    animation: fadeIn 0.2s ease;
+}
+
+.dropdown-item {
+    padding: 10px;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid #eee;
+}
+
+.dropdown-btn {
+    margin-top: 8px;
+    width: 100%;
+}
 
 /* SIDEBAR */
 
