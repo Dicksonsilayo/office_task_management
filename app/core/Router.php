@@ -222,6 +222,11 @@ class Router
             case 'api_notifications':
                 require_once __DIR__ . '/../controllers/api/NotificationApi.php';
                 break;
+                case 'delete_task':
+    Guard::auth();
+    require_once __DIR__ . '/../controllers/TaskController.php';
+    (new TaskController())->delete();
+    break;
 
             /*
             |--------------------------------------------------------------------------

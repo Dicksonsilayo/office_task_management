@@ -251,6 +251,17 @@
 
         return false;
     }
+    public function delete($id)
+{
+    $stmt = $this->conn->prepare("
+        DELETE FROM tasks 
+        WHERE id = ?
+    ");
+
+    $stmt->bind_param("i", $id);
+
+    return $stmt->execute();
+}
 
 
 

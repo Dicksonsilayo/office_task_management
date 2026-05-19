@@ -9,6 +9,37 @@
             <p>Assign a new task to staff</p>
         </div>
 
+        <!-- =========================
+             SUCCESS MESSAGE
+        ========================= -->
+       <!-- SUCCESS MESSAGE -->
+<?php if (isset($_SESSION['success'])): ?>
+    <div class="success-message">
+        <?= htmlspecialchars($_SESSION['success']) ?>
+    </div>
+    <?php unset($_SESSION['success']); ?>
+<?php endif; ?>
+
+<!-- ERROR MESSAGES (ARRAY SUPPORT) -->
+<?php if (isset($_SESSION['errors']) && is_array($_SESSION['errors'])): ?>
+    <div class="error-message">
+
+        <?php foreach ($_SESSION['errors'] as $err): ?>
+            <div><?= htmlspecialchars($err) ?></div>
+        <?php endforeach; ?>
+
+    </div>
+    <?php unset($_SESSION['errors']); ?>
+<?php endif; ?>
+
+<!-- SINGLE ERROR (OPTIONAL BACKWARD SUPPORT) -->
+<?php if (isset($_SESSION['error'])): ?>
+    <div class="error-message">
+        <?= htmlspecialchars($_SESSION['error']); ?>
+    </div>
+    <?php unset($_SESSION['error']); ?>
+<?php endif; ?>
+
         <form method="POST" action="index.php?page=store_task">
 
             <!-- TITLE -->
@@ -39,11 +70,16 @@
                 <label>Assign To</label>
                 <select name="assigned_to" required>
                     <option value="">Select User</option>
-                        <?php foreach(($users ?? []) as $user): ?>
-                        <option value="<?= $user['id'] ?>">
-                            <?= $user['name'] ?>
-                        </option>
-                    <?php endforeach; ?>
+
+                    <?php if (!empty($users)): ?>
+                        <?php foreach ($users as $user): ?>
+                            <option value="<?= $user['id'] ?>">
+                                <?= htmlspecialchars($user['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <option disabled>No users found</option>
+                    <?php endif; ?>
 
                 </select>
             </div>
@@ -54,11 +90,15 @@
                 <select name="goal_id" required>
                     <option value="">Select Goal</option>
 
-                   <?php foreach(($goals ?? []) as $goal): ?>
-                        <option value="<?= $goal['id'] ?>">
-                            <?= $goal['name'] ?>
-                        </option>
-                    <?php endforeach; ?>
+                    <?php if (!empty($goals)): ?>
+                        <?php foreach ($goals as $goal): ?>
+                            <option value="<?= $goal['id'] ?>">
+                                <?= htmlspecialchars($goal['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <option disabled>No goals found</option>
+                    <?php endif; ?>
 
                 </select>
             </div>
@@ -78,11 +118,20 @@
             <button class="btn-submit" type="submit">
                 Create Task
             </button>
+<script>
+           setTimeout(() => { const success = document.querySelector('.success-message'); 
+           const error = document.querySelector('.error-message');
+            if(success){ success.style.display = 'none';
 
+             } 
+             if(error){ 
+                error.style.display = 'none'; } }, 5000);
+            
+            </script>
         </form>
 
     </div>
 
 </div>
 
-<?php require_once __DIR__ . '/../layouts/footer.php'; ?>m
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

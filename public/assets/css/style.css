@@ -542,3 +542,23 @@ table td {
     text-decoration: none;
     font-size: 12px;
 }
+
+.success-message{
+    background: #d6b857;
+    color: #155724;
+    padding: 12px;
+    height: 40px;
+
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+/* ERROR */
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    height: 40px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}

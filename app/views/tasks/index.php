@@ -6,7 +6,7 @@ $tasks = $tasks ?? [];
 
 /*
 |--------------------------------------------------------------------------
-| SAFE COUNTERS (NO PHP WARNINGS)
+| SAFE COUNTERS
 |--------------------------------------------------------------------------
 */
 $pending = 0;
@@ -106,10 +106,12 @@ foreach ($tasks as $t) {
             <!-- ACTIONS -->
             <div class="task-actions">
 
+                <!-- VIEW -->
                 <a href="index.php?page=task_show&id=<?= $id ?>" class="btn-primary">
                     View Details
                 </a>
 
+                <!-- STATUS UPDATE -->
                 <form method="POST" action="index.php?page=update_task_status">
 
                     <input type="hidden" name="task_id" value="<?= $id ?>">
@@ -127,6 +129,16 @@ foreach ($tasks as $t) {
                     <?php endif; ?>
 
                 </form>
+
+    <?php if ($role === 'admin'): ?>
+    <a href="index.php?page=delete_task&id=<?= $id ?>"
+       onclick="return confirm('Are you sure you want to delete this task?')"
+       class="btn-danger">
+        Delete
+    </a>
+
+
+<?php endif; ?>
 
             </div>
 
