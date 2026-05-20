@@ -227,6 +227,22 @@ class Router
     require_once __DIR__ . '/../controllers/TaskController.php';
     (new TaskController())->delete();
     break;
+    /*
+|--------------------------------------------------------------------------
+| PROFILE
+|--------------------------------------------------------------------------
+*/
+case 'profile':
+    Guard::auth();
+    require_once __DIR__ . '/../controllers/ProfileController.php';
+    (new ProfileController())->index();
+    break;
+
+case 'update_profile':
+    Guard::auth();
+    require_once __DIR__ . '/../controllers/ProfileController.php';
+    (new ProfileController())->update();
+    break;
 
             /*
             |--------------------------------------------------------------------------

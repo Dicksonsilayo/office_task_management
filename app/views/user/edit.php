@@ -26,7 +26,8 @@ $roles = $roles ?? [];
         <!-- ERROR MESSAGE -->
         <?php if (!empty($_SESSION['error'])): ?>
             <div class="alert-error">
-                <?= $_SESSION['error']; unset($_SESSION['error']); ?>
+                <?= $_SESSION['error'];
+                 unset($_SESSION['error']); ?>
             </div>
         <?php endif; ?>
 

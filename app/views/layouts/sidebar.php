@@ -42,7 +42,11 @@ $active = $_GET['page'] ?? 'dashboard';
     <?php endif; ?>
 
     <a href="index.php?page=notifications">Notifications</a>
-    <a href="index.php?page=profile">Profile</a>
+    
+    <a href="index.php?page=profile">
+        My Profile
+    </a>
+
     <a href="index.php?page=logout">Logout</a>
 
 </div>

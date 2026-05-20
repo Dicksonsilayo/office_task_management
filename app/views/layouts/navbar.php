@@ -14,3 +14,18 @@ $user = Auth::user();
     </strong>
 
 </div>
+<?php
+$user = Auth::user();
+
+$profileImage = !empty($user['profile_picture'])
+    ? "uploads/profiles/" . $user['profile_picture']
+    : "https://ui-avatars.com/api/?name=" . urlencode($user['name']);
+?>
+
+<img src="<?= $profileImage ?>"
+     style="
+        width:40px;
+        height:40px;
+        border-radius:50%;
+        object-fit:cover;
+     ">
