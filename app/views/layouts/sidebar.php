@@ -33,7 +33,7 @@ $active = $_GET['page'] ?? 'dashboard';
     <?php elseif ($role === 'receptionist'): ?>
 
         <a href="index.php?page=visitors">Visitors</a>
-        <a href="index.php?page=visitor_attendance">Attendance</a>
+        
 
     <?php else: ?>
 
