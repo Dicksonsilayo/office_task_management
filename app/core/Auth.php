@@ -1,57 +1,90 @@
 <?php
 
-require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../configs/database.php';
 
-class Auth {
+class Auth
+{
+    /*
+    |--------------------------------------------------------------------------
+    | LOGIN USER
+    |--------------------------------------------------------------------------
+    */
+    public static function login($user)
+    {
+        session_start();
+        $_SESSION['user'] = $user;
+    }
 
+    /*
+    |--------------------------------------------------------------------------
+    | LOGOUT USER
+    |--------------------------------------------------------------------------
+    */
+    public static function logout()
+    {
+        session_start();
+        session_destroy();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET AUTH USER (WITH PIVOT ROLES FIX)
+    |--------------------------------------------------------------------------
+    */
     public static function user()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        if (!isset($_SESSION['user_id'])) {
+        if (!isset($_SESSION['user'])) {
             return null;
         }
 
-        $userModel = new User();
-        return $userModel->find($_SESSION['user_id']);
-    }
+        $user = $_SESSION['user'];
 
-    public static function check()
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+        $db = (new Database())->connect();
+
+        $stmt = $db->prepare("
+            SELECT r.name
+            FROM roles r
+            INNER JOIN role_user ru ON ru.role_id = r.id
+            WHERE ru.user_id = ?
+        ");
+
+        $stmt->bind_param("i", $user['id']);
+        $stmt->execute();
+
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        // convert roles to simple array
+        $roles = [];
+
+        foreach ($result as $r) {
+            $roles[] = strtolower($r['name']);
         }
 
-        return isset($_SESSION['user_id']);
+        $user['roles'] = $roles;
+
+        return $user;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | CHECK LOGIN
+    |--------------------------------------------------------------------------
+    */
+    public static function check()
+    {
+        return isset($_SESSION['user']);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | REQUIRE LOGIN
+    |--------------------------------------------------------------------------
+    */
     public static function requireLogin()
     {
         if (!self::check()) {
             header("Location: index.php?page=login");
             exit;
         }
-    }
-
-    public static function login($user)
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['role'] = $user['role'];
-    }
-
-    public static function logout()
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        session_unset();
-        session_destroy();
     }
 }

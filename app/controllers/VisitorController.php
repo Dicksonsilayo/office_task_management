@@ -76,27 +76,37 @@ class VisitorController
     }
 
     public function checkIn()
-    {
-        Auth::requireLogin();
+{
+    Auth::requireLogin();
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $this->visitorModel->checkIn($_POST['visitor_id']);
-            header("Location: index.php?page=visitors");
-            exit;
-        }
+    $visitorId = (int) $_POST['visitor_id'];
+
+    if ($this->visitorModel->isInside($visitorId)) {
+        $_SESSION['error'] = "Visitor already inside";
+        header("Location: index.php?page=visitors");
+        exit;
     }
 
-    public function checkOut()
-    {
-        Auth::requireLogin();
+    $this->visitorModel->checkIn($visitorId);
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $this->visitorModel->checkOut($_POST['visitor_id']);
-            header("Location: index.php?page=visitors");
-            exit;
-        }
-    }
+    $_SESSION['success'] = "Visitor checked in";
+    header("Location: index.php?page=visitors");
+    exit;
+}
 
+public function checkOut()
+{
+    Auth::requireLogin();
+
+    $visitorId = (int) $_POST['visitor_id'];
+
+    $this->visitorModel->checkOut($visitorId);
+
+    $_SESSION['success'] = "Visitor checked out";
+    header("Location: index.php?page=visitors");
+    exit;
+}
+ 
     public function history()
     {
         Auth::requireLogin();

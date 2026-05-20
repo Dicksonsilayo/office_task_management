@@ -5,7 +5,7 @@ ini_set('display_errors', 1);
 
 /*
 |--------------------------------------------------------------------------
-| CORE DEPENDENCIES (LOAD ONCE ONLY)
+| CORE DEPENDENCIES
 |--------------------------------------------------------------------------
 */
 require_once __DIR__ . '/Auth.php';
@@ -88,48 +88,48 @@ class Router
 
             /*
             |--------------------------------------------------------------------------
-            | VISITORS (RECEPTIONIST ONLY)
+            | VISITORS (ADMIN + RECEPTIONIST)
             |--------------------------------------------------------------------------
             */
             case 'visitors':
-                Guard::receptionistOnly();
+                Guard::adminOrReceptionist();
                 require_once __DIR__ . '/../controllers/VisitorController.php';
                 (new VisitorController())->index();
                 break;
 
             case 'create_visitor':
-                Guard::receptionistOnly();
+                Guard::adminOrReceptionist();
                 require_once __DIR__ . '/../controllers/VisitorController.php';
                 (new VisitorController())->create();
                 break;
 
             case 'store_visitor':
-                Guard::receptionistOnly();
+                Guard::adminOrReceptionist();
                 require_once __DIR__ . '/../controllers/VisitorController.php';
                 (new VisitorController())->store();
                 break;
 
             case 'checkin_visitor':
-                Guard::receptionistOnly();
+                Guard::adminOrReceptionist();
                 require_once __DIR__ . '/../controllers/VisitorController.php';
                 (new VisitorController())->checkIn();
                 break;
 
             case 'checkout_visitor':
-                Guard::receptionistOnly();
+                Guard::adminOrReceptionist();
                 require_once __DIR__ . '/../controllers/VisitorController.php';
                 (new VisitorController())->checkOut();
                 break;
 
             case 'visitor_history':
-                Guard::receptionistOnly();
+                Guard::adminOrReceptionist();
                 require_once __DIR__ . '/../controllers/VisitorController.php';
                 (new VisitorController())->history();
                 break;
 
             /*
             |--------------------------------------------------------------------------
-            | TASKS (ALL LOGGED USERS)
+            | TASKS (ALL USERS)
             |--------------------------------------------------------------------------
             */
             case 'tasks':
@@ -144,11 +144,6 @@ class Router
                 (new TaskController())->show();
                 break;
 
-            /*
-            |--------------------------------------------------------------------------
-            | TASK MANAGEMENT (ADMIN + HOD)
-            |--------------------------------------------------------------------------
-            */
             case 'create_task':
                 Guard::adminOrHod();
                 require_once __DIR__ . '/../controllers/TaskController.php';
@@ -171,6 +166,12 @@ class Router
                 Guard::auth();
                 require_once __DIR__ . '/../controllers/TaskController.php';
                 (new TaskController())->addComment();
+                break;
+
+            case 'delete_task':
+                Guard::adminOnly();
+                require_once __DIR__ . '/../controllers/TaskController.php';
+                (new TaskController())->delete();
                 break;
 
             /*
@@ -222,27 +223,23 @@ class Router
             case 'api_notifications':
                 require_once __DIR__ . '/../controllers/api/NotificationApi.php';
                 break;
-                case 'delete_task':
-    Guard::auth();
-    require_once __DIR__ . '/../controllers/TaskController.php';
-    (new TaskController())->delete();
-    break;
-    /*
-|--------------------------------------------------------------------------
-| PROFILE
-|--------------------------------------------------------------------------
-*/
-case 'profile':
-    Guard::auth();
-    require_once __DIR__ . '/../controllers/ProfileController.php';
-    (new ProfileController())->index();
-    break;
 
-case 'update_profile':
-    Guard::auth();
-    require_once __DIR__ . '/../controllers/ProfileController.php';
-    (new ProfileController())->update();
-    break;
+            /*
+            |--------------------------------------------------------------------------
+            | PROFILE
+            |--------------------------------------------------------------------------
+            */
+            case 'profile':
+                Guard::auth();
+                require_once __DIR__ . '/../controllers/ProfileController.php';
+                (new ProfileController())->index();
+                break;
+
+            case 'update_profile':
+                Guard::auth();
+                require_once __DIR__ . '/../controllers/ProfileController.php';
+                (new ProfileController())->update();
+                break;
 
             /*
             |--------------------------------------------------------------------------

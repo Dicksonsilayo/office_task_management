@@ -104,16 +104,15 @@
         exit;
     }
 
-    // =========================
-    // FINAL SAFE DATA
-    // =========================
-    $data = [
-        'name' => htmlspecialchars($name),
-        'email' => strtolower($email),
-        'password' => $password,
-        'department_id' => (int)$department_id,
-        'role_id' => (int)$role_id
-    ];
+  $data = [
+    'name' => $name,
+    'email' => $email,
+    'password' => $password,
+    'department_id' => $department_id,
+    'role_id' => $role_id
+];
+
+$this->userModel->create($data);
 
     $this->userModel->create($data);
 

@@ -4,103 +4,62 @@ require_once __DIR__ . '/Auth.php';
 
 class Guard
 {
-    /*
-    |--------------------------------------------------------------------------
-    | BASE CHECK (CORE LOGIC)
-    |--------------------------------------------------------------------------
-    */
-    private static function check(array $roles = [])
+    private static function roles()
     {
-        Auth::requireLogin();
-
         $user = Auth::user();
+        return $user['roles'] ?? [];
+    }
 
-        if (!$user) {
+    public static function auth()
+    {
+        if (!Auth::check()) {
             header("Location: index.php?page=login");
             exit;
         }
+    }
 
-        $role = strtolower($user['role'] ?? '');
+    public static function adminOnly()
+    {
+        self::auth();
 
-        $roles = array_map('strtolower', $roles);
-
-        if (!in_array($role, $roles)) {
+        if (!in_array('admin', self::roles())) {
             header("Location: index.php?page=dashboard");
             exit;
         }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | AUTH ONLY (ANY LOGGED USER)
-    |--------------------------------------------------------------------------
-    */
-    public static function auth()
-    {
-        Auth::requireLogin();
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | ADMIN ONLY
-    |--------------------------------------------------------------------------
-    */
-    public static function adminOnly()
-    {
-        self::check(['admin']);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | HOD ONLY
-    |--------------------------------------------------------------------------
-    */
-    public static function hodOnly()
-    {
-        self::check(['hod']);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | ADMIN OR HOD
-    |--------------------------------------------------------------------------
-    */
     public static function adminOrHod()
     {
-        self::check(['admin', 'hod']);
+        self::auth();
+
+        if (
+            !in_array('admin', self::roles()) &&
+            !in_array('hod', self::roles())
+        ) {
+            header("Location: index.php?page=dashboard");
+            exit;
+        }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | RECEPTIONIST ONLY
-    |--------------------------------------------------------------------------
-    */
     public static function receptionistOnly()
     {
-        self::check(['receptionist']);
-    }
+        self::auth();
 
-    /*
-    |--------------------------------------------------------------------------
-    | STAFF ONLY
-    |--------------------------------------------------------------------------
-    */
-    public static function staffOnly()
-    {
-        self::check(['staff']);
+        if (!in_array('receptionist', self::roles())) {
+            header("Location: index.php?page=dashboard");
+            exit;
+        }
     }
+    public static function adminOrReceptionist()
+{
+    self::auth();
 
-    /*
-    |--------------------------------------------------------------------------
-    | OPTIONAL DEBUG HELP (REMOVE LATER IF NEEDED)
-    |--------------------------------------------------------------------------
-    */
-    public static function debugRole()
-    {
-        $user = Auth::user();
-        echo "<pre>";
-        print_r($user);
-        echo "</pre>";
+    if (
+        !in_array('admin', self::roles()) &&
+        !in_array('receptionist', self::roles())
+    ) {
+        header("Location: index.php?page=dashboard");
         exit;
     }
+}
 }

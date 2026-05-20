@@ -4,7 +4,6 @@ require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Task.php';
 require_once __DIR__ . '/../models/Visitor.php';
-
 class DashboardController
 {
     public function index()
@@ -24,16 +23,17 @@ class DashboardController
             'totalVisitors' => count($visitorModel->getAll()),
         ];
 
-        // ROLE-BASED DASHBOARD ROUTING
-        if ($authUser['role'] === 'admin') {
+        $roles = $authUser['roles'] ?? [];
+
+        if (in_array('admin', $roles)) {
             require __DIR__ . '/../views/dashboard/index.php';
         }
 
-        elseif ($authUser['role'] === 'hod') {
+        elseif (in_array('hod', $roles)) {
             require __DIR__ . '/../views/dashboard/hod.php';
         }
 
-        elseif ($authUser['role'] === 'receptionist') {
+        elseif (in_array('receptionist', $roles)) {
             require __DIR__ . '/../views/dashboard/receptionist.php';
         }
 

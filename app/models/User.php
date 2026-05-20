@@ -1,278 +1,183 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors',1);
+
 require_once __DIR__ . '/../configs/database.php';
 
-class User {
-
+class User
+{
     private $conn;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->conn = (new Database())->connect();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | FIND USER BY EMAIL (WITH ROLE)
-    |--------------------------------------------------------------------------
-    */public function findByEmail($email)
+    public function findByEmail($email)
 {
     $stmt = $this->conn->prepare("
         SELECT 
-            users.*,
-            roles.name AS role
+            users.*
         FROM users
-
-        LEFT JOIN role_user
-            ON role_user.user_id = users.id
-
-        LEFT JOIN roles
-            ON roles.id = role_user.role_id
-
-        WHERE users.email = ?
+        WHERE email = ?
         LIMIT 1
     ");
 
     $stmt->bind_param("s", $email);
-
     $stmt->execute();
 
-    return $stmt
-        ->get_result()
-        ->fetch_assoc();
+    $result = $stmt->get_result();
+
+    return $result->fetch_assoc();
 }
+
     /*
     |--------------------------------------------------------------------------
-    | GET ALL USERS
+    | GET ALL USERS (WITH ROLES + DEPARTMENT)
     |--------------------------------------------------------------------------
     */
-  public function getAll()
-{
-    $result = $this->conn->query("
-        SELECT 
-            users.id,
-            users.name,
-            users.email,
-            users.department_id,
-            roles.name AS role
-        FROM users
-        LEFT JOIN role_user ON role_user.user_id = users.id
-        LEFT JOIN roles ON roles.id = role_user.role_id
-        GROUP BY users.id
-    ");
+    public function getAll()
+    {
+        $stmt = $this->conn->query("
+            SELECT 
+                users.*,
+                departments.name AS department_name,
+                GROUP_CONCAT(roles.name SEPARATOR ', ') AS roles
+            FROM users
 
-    return $result->fetch_all(MYSQLI_ASSOC);
-}    /*
+            LEFT JOIN departments 
+                ON departments.id = users.department_id
+
+            LEFT JOIN role_user 
+                ON role_user.user_id = users.id
+
+            LEFT JOIN roles 
+                ON roles.id = role_user.role_id
+
+            GROUP BY users.id
+
+            ORDER BY users.id DESC
+        ");
+
+        return $stmt->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /*
     |--------------------------------------------------------------------------
     | CREATE USER
     |--------------------------------------------------------------------------
-    */public function create($data) {
-
-    /*
-    |--------------------------------------------------------------------------
-    | HASH PASSWORD
-    |--------------------------------------------------------------------------
     */
-
-    $password = password_hash(
-        $data['password'],
-        PASSWORD_DEFAULT
-    );
-
-    /*
-    |--------------------------------------------------------------------------
-    | INSERT USER
-    |--------------------------------------------------------------------------
-    */
-
-    $stmt = $this->conn->prepare("
-        INSERT INTO users (
-            name,
-            email,
-            password,
-            department_id
-        )
-        VALUES (?, ?, ?, ?)
-    ");
-
-    $stmt->bind_param(
-        "sssi",
-        $data['name'],
-        $data['email'],
-        $password,
-        $data['department_id']
-    );
-
-    $stmt->execute();
-
-    /*
-    |--------------------------------------------------------------------------
-    | GET NEW USER ID
-    |--------------------------------------------------------------------------
-    */
-
-    $userId = $this->conn->insert_id;
-
-    /*
-    |--------------------------------------------------------------------------
-    | ASSIGN ROLE
-    |--------------------------------------------------------------------------
-    */
-
-    $roleStmt = $this->conn->prepare("
-        INSERT INTO role_user (
-            role_id,
-            user_id
-        )
-        VALUES (?, ?)
-    ");
-
-    $roleStmt->bind_param(
-        "ii",
-        $data['role_id'],
-        $userId
-    );
-
-    return $roleStmt->execute();
-}
-/*
-|--------------------------------------------------------------------------
-| FIND USER BY ID
-|--------------------------------------------------------------------------
-*/public function find($id)
-{
-    $stmt = $this->conn->prepare("
-        SELECT 
-            users.*,
-            roles.name AS role
-        FROM users
-        LEFT JOIN role_user ON role_user.user_id = users.id
-        LEFT JOIN roles ON roles.id = role_user.role_id
-        WHERE users.id = ?
-        LIMIT 1
-    ");
-
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-
-    return $stmt->get_result()->fetch_assoc();
-}
-
-public function update($data)
-{
-    // UPDATE USER TABLE
-    $stmt = $this->conn->prepare("
-        UPDATE users
-        SET name = ?, email = ?, department_id = ?
-        WHERE id = ?
-    ");
-
-    $stmt->bind_param(
-        "ssii",
-        $data['name'],
-        $data['email'],
-        $data['department_id'],
-        $data['id']
-    );
-
-    $stmt->execute();
-
-    // PASSWORD UPDATE (OPTIONAL)
-    if (!empty($data['password'])) {
-
-        $password = password_hash($data['password'], PASSWORD_DEFAULT);
-
+    public function create($data)
+    {
+        // 1. Insert user
         $stmt = $this->conn->prepare("
-            UPDATE users
-            SET password = ?
-            WHERE id = ?
+            INSERT INTO users (name, email, password, department_id)
+            VALUES (?, ?, ?, ?)
         ");
 
-        $stmt->bind_param("si", $password, $data['id']);
+        $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
+
+        $stmt->bind_param(
+            "sssi",
+            $data['name'],
+            $data['email'],
+            $hashedPassword,
+            $data['department_id']
+        );
+
         $stmt->execute();
-    }
 
-    // ROLE UPDATE
-    $this->conn->query("DELETE FROM role_user WHERE user_id = {$data['id']}");
+        $userId = $this->conn->insert_id;
 
-    $stmt = $this->conn->prepare("
-        INSERT INTO role_user (role_id, user_id)
-        VALUES (?, ?)
-    ");
-
-    $stmt->bind_param("ii", $data['role_id'], $data['id']);
-    return $stmt->execute();
-}
-/*
-|--------------------------------------------------------------------------
-| DELETE USER
-|--------------------------------------------------------------------------
-*/public function delete($id)
-{
-    $stmt = $this->conn->prepare("
-        DELETE FROM role_user
-        WHERE user_id = ?
-    ");
-
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-
-    $stmt = $this->conn->prepare("
-        DELETE FROM users
-        WHERE id = ?
-    ");
-
-    $stmt->bind_param("i", $id);
-
-    return $stmt->execute();
-}
-public function getByDepartment($deptId) {
-
-    $stmt = $this->conn->prepare("
-        SELECT * FROM users
-        WHERE department_id = ?
-    ");
-
-    $stmt->bind_param("i", $deptId);
-    $stmt->execute();
-
-    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-}
-public function getAllByRole($user)
-{
-    $role = strtolower($user['role_name'] ?? '');
-    $userId = $user['id'];
-    $deptId = $user['department_id'] ?? 0;
-
-    if ($role === 'admin') {
-        $result = $this->conn->query("SELECT * FROM tasks ORDER BY id DESC");
-        return $result->fetch_all(MYSQLI_ASSOC);
-    }
-
-    if ($role === 'hod') {
-
-        $stmt = $this->conn->prepare("
-            SELECT * FROM tasks 
-            WHERE department_id = ?
-            ORDER BY id DESC
+        // 2. Insert role into pivot
+        $this->conn->query("
+            INSERT INTO role_user (user_id, role_id)
+            VALUES ($userId, {$data['role_id']})
         ");
 
-        $stmt->bind_param("i", $deptId);
-        $stmt->execute();
-
-        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        return true;
     }
 
-    // staff
-    $stmt = $this->conn->prepare("
-        SELECT * FROM tasks 
-        WHERE assigned_to = ?
-        ORDER BY id DESC
-    ");
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE USER
+    |--------------------------------------------------------------------------
+    */
+    public function update($data)
+    {
+        $id = $data['id'];
 
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
+        if (!empty($data['password'])) {
 
-    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-}
+            $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
+
+            $stmt = $this->conn->prepare("
+                UPDATE users 
+                SET name=?, email=?, password=?, department_id=?
+                WHERE id=?
+            ");
+
+            $stmt->bind_param(
+                "sssii",
+                $data['name'],
+                $data['email'],
+                $hashedPassword,
+                $data['department_id'],
+                $id
+            );
+
+        } else {
+
+            $stmt = $this->conn->prepare("
+                UPDATE users 
+                SET name=?, email=?, department_id=?
+                WHERE id=?
+            ");
+
+            $stmt->bind_param(
+                "ssii",
+                $data['name'],
+                $data['email'],
+                $data['department_id'],
+                $id
+            );
+        }
+
+        $stmt->execute();
+
+        // 2. Reset roles
+        $this->conn->query("DELETE FROM role_user WHERE user_id = $id");
+
+        // 3. Re-assign role
+        if (!empty($data['role_id'])) {
+            $this->conn->query("
+                INSERT INTO role_user (user_id, role_id)
+                VALUES ($id, {$data['role_id']})
+            ");
+        }
+
+        return true;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE USER
+    |--------------------------------------------------------------------------
+    */
+    public function delete($id)
+    {
+        $this->conn->query("DELETE FROM users WHERE id = $id");
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FIND USER
+    |--------------------------------------------------------------------------
+    */
+    public function find($id)
+    {
+        $stmt = $this->conn->query("
+            SELECT * FROM users WHERE id = $id LIMIT 1
+        ");
+
+        return $stmt->fetch_assoc();
+    }
 }

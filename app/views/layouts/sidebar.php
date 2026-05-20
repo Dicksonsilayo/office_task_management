@@ -5,8 +5,7 @@ $user = Auth::user();
 
 if (!$user) return;
 
-$role = strtolower($user['role'] ?? 'staff');
-
+$roles = $user['roles'] ?? [];
 $active = $_GET['page'] ?? 'dashboard';
 ?>
 
@@ -16,7 +15,7 @@ $active = $_GET['page'] ?? 'dashboard';
 
     <a href="index.php?page=dashboard">Dashboard</a>
 
-    <?php if ($role === 'admin'): ?>
+    <?php if (in_array('admin', $roles)): ?>
 
         <a href="index.php?page=users">Manage Users</a>
         <a href="index.php?page=goals">Goals</a>
@@ -24,16 +23,15 @@ $active = $_GET['page'] ?? 'dashboard';
         <a href="index.php?page=visitors">Visitors</a>
         <a href="index.php?page=reports">Reports</a>
 
-    <?php elseif ($role === 'hod'): ?>
+    <?php elseif (in_array('hod', $roles)): ?>
 
         <a href="index.php?page=goals">Goals</a>
         <a href="index.php?page=tasks">Tasks</a>
         <a href="index.php?page=reports">Reports</a>
 
-    <?php elseif ($role === 'receptionist'): ?>
+    <?php elseif (in_array('receptionist', $roles)): ?>
 
         <a href="index.php?page=visitors">Visitors</a>
-        
 
     <?php else: ?>
 
@@ -42,11 +40,7 @@ $active = $_GET['page'] ?? 'dashboard';
     <?php endif; ?>
 
     <a href="index.php?page=notifications">Notifications</a>
-    
-    <a href="index.php?page=profile">
-        My Profile
-    </a>
-
+    <a href="index.php?page=profile">My Profile</a>
     <a href="index.php?page=logout">Logout</a>
 
 </div>
