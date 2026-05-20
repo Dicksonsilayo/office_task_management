@@ -11,53 +11,103 @@ class User
         $this->conn = (new Database())->connect();
     }
 
-    public function findByEmail($email)
-{
-    $stmt = $this->conn->prepare("
-        SELECT 
-            users.*
-        FROM users
-        WHERE email = ?
-        LIMIT 1
-    ");
-
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-
-    $result = $stmt->get_result();
-
-    return $result->fetch_assoc();
-}
-
     /*
     |--------------------------------------------------------------------------
-    | GET ALL USERS (WITH ROLES + DEPARTMENT)
+    | GET ALL USERS WITH ROLE + DEPARTMENT
     |--------------------------------------------------------------------------
     */
     public function getAll()
     {
-        $stmt = $this->conn->query("
+        $query = "
             SELECT 
                 users.*,
                 departments.name AS department_name,
-                GROUP_CONCAT(roles.name SEPARATOR ', ') AS roles
+                roles.name AS role
+
             FROM users
 
-            LEFT JOIN departments 
+            LEFT JOIN departments
                 ON departments.id = users.department_id
 
-            LEFT JOIN role_user 
+            LEFT JOIN role_user
                 ON role_user.user_id = users.id
 
-            LEFT JOIN roles 
+            LEFT JOIN roles
                 ON roles.id = role_user.role_id
+
+            ORDER BY users.id DESC
+        ";
+
+        $result = $this->conn->query($query);
+
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FIND USER BY ID
+    |--------------------------------------------------------------------------
+    */
+    public function find($id)
+    {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                users.*,
+                roles.id AS role_id,
+                roles.name AS role
+
+            FROM users
+
+            LEFT JOIN role_user
+                ON role_user.user_id = users.id
+
+            LEFT JOIN roles
+                ON roles.id = role_user.role_id
+
+            WHERE users.id = ?
+            LIMIT 1
+        ");
+
+        $stmt->bind_param("i", $id);
+
+        $stmt->execute();
+
+        return $stmt->get_result()->fetch_assoc();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FIND BY EMAIL (LOGIN)
+    |--------------------------------------------------------------------------
+    */
+    public function findByEmail($email)
+    {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                users.*,
+
+                GROUP_CONCAT(roles.name) AS roles
+
+            FROM users
+
+            LEFT JOIN role_user
+                ON role_user.user_id = users.id
+
+            LEFT JOIN roles
+                ON roles.id = role_user.role_id
+
+            WHERE users.email = ?
 
             GROUP BY users.id
 
-            ORDER BY users.id DESC
+            LIMIT 1
         ");
 
-        return $stmt->fetch_all(MYSQLI_ASSOC);
+        $stmt->bind_param("s", $email);
+
+        $stmt->execute();
+
+        return $stmt->get_result()->fetch_assoc();
     }
 
     /*
@@ -67,13 +117,25 @@ class User
     */
     public function create($data)
     {
-        // 1. Insert user
+        /*
+        |--------------------------------------------------------------------------
+        | INSERT USER
+        |--------------------------------------------------------------------------
+        */
+        $hashedPassword = password_hash(
+            $data['password'],
+            PASSWORD_DEFAULT
+        );
+
         $stmt = $this->conn->prepare("
-            INSERT INTO users (name, email, password, department_id)
+            INSERT INTO users(
+                name,
+                email,
+                password,
+                department_id
+            )
             VALUES (?, ?, ?, ?)
         ");
-
-        $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
 
         $stmt->bind_param(
             "sssi",
@@ -87,13 +149,26 @@ class User
 
         $userId = $this->conn->insert_id;
 
-        // 2. Insert role into pivot
-        $this->conn->query("
-            INSERT INTO role_user (user_id, role_id)
-            VALUES ($userId, {$data['role_id']})
+        /*
+        |--------------------------------------------------------------------------
+        | INSERT ROLE INTO PIVOT TABLE
+        |--------------------------------------------------------------------------
+        */
+        $roleStmt = $this->conn->prepare("
+            INSERT INTO role_user(
+                role_id,
+                user_id
+            )
+            VALUES (?, ?)
         ");
 
-        return true;
+        $roleStmt->bind_param(
+            "ii",
+            $data['role_id'],
+            $userId
+        );
+
+        return $roleStmt->execute();
     }
 
     /*
@@ -103,16 +178,26 @@ class User
     */
     public function update($data)
     {
-        $id = $data['id'];
-
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE USERS TABLE
+        |--------------------------------------------------------------------------
+        */
         if (!empty($data['password'])) {
 
-            $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
+            $hashedPassword = password_hash(
+                $data['password'],
+                PASSWORD_DEFAULT
+            );
 
             $stmt = $this->conn->prepare("
-                UPDATE users 
-                SET name=?, email=?, password=?, department_id=?
-                WHERE id=?
+                UPDATE users
+                SET
+                    name = ?,
+                    email = ?,
+                    password = ?,
+                    department_id = ?
+                WHERE id = ?
             ");
 
             $stmt->bind_param(
@@ -121,15 +206,18 @@ class User
                 $data['email'],
                 $hashedPassword,
                 $data['department_id'],
-                $id
+                $data['id']
             );
 
         } else {
 
             $stmt = $this->conn->prepare("
-                UPDATE users 
-                SET name=?, email=?, department_id=?
-                WHERE id=?
+                UPDATE users
+                SET
+                    name = ?,
+                    email = ?,
+                    department_id = ?
+                WHERE id = ?
             ");
 
             $stmt->bind_param(
@@ -137,24 +225,44 @@ class User
                 $data['name'],
                 $data['email'],
                 $data['department_id'],
-                $id
+                $data['id']
             );
         }
 
         $stmt->execute();
 
-        // 2. Reset roles
-        $this->conn->query("DELETE FROM role_user WHERE user_id = $id");
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE ROLE PIVOT
+        |--------------------------------------------------------------------------
+        */
+        $deleteStmt = $this->conn->prepare("
+            DELETE FROM role_user
+            WHERE user_id = ?
+        ");
 
-        // 3. Re-assign role
-        if (!empty($data['role_id'])) {
-            $this->conn->query("
-                INSERT INTO role_user (user_id, role_id)
-                VALUES ($id, {$data['role_id']})
-            ");
-        }
+        $deleteStmt->bind_param(
+            "i",
+            $data['id']
+        );
 
-        return true;
+        $deleteStmt->execute();
+
+        $insertStmt = $this->conn->prepare("
+            INSERT INTO role_user(
+                role_id,
+                user_id
+            )
+            VALUES (?, ?)
+        ");
+
+        $insertStmt->bind_param(
+            "ii",
+            $data['role_id'],
+            $data['id']
+        );
+
+        return $insertStmt->execute();
     }
 
     /*
@@ -164,20 +272,32 @@ class User
     */
     public function delete($id)
     {
-        $this->conn->query("DELETE FROM users WHERE id = $id");
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | FIND USER
-    |--------------------------------------------------------------------------
-    */
-    public function find($id)
-    {
-        $stmt = $this->conn->query("
-            SELECT * FROM users WHERE id = $id LIMIT 1
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE PIVOT FIRST
+        |--------------------------------------------------------------------------
+        */
+        $pivotStmt = $this->conn->prepare("
+            DELETE FROM role_user
+            WHERE user_id = ?
         ");
 
-        return $stmt->fetch_assoc();
+        $pivotStmt->bind_param("i", $id);
+
+        $pivotStmt->execute();
+
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE USER
+        |--------------------------------------------------------------------------
+        */
+        $stmt = $this->conn->prepare("
+            DELETE FROM users
+            WHERE id = ?
+        ");
+
+        $stmt->bind_param("i", $id);
+
+        return $stmt->execute();
     }
-}
+} 

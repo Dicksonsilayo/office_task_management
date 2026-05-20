@@ -33,23 +33,36 @@
         | CREATE FORM
         |--------------------------------------------------------------------------
         */
+
         public function create()
-        {
-            Guard::adminOnly();
+{
+    Guard::adminOnly();
 
-            $db = (new Database())->connect();
+    $db = (new Database())->connect();
 
-            $departments = $db->query("SELECT * FROM departments")->fetch_all(MYSQLI_ASSOC);
-            $roles = $db->query("SELECT * FROM roles")->fetch_all(MYSQLI_ASSOC);
+    // DEBUG SAFE: ensure roles exist
+    $roles = [];
+    $departments = [];
 
-            require __DIR__ . '/../views/user/create.php';
-        }
+    $roleResult = $db->query("SELECT id, name FROM roles ORDER BY name ASC");
+    if ($roleResult) {
+        $roles = $roleResult->fetch_all(MYSQLI_ASSOC);
+    }
 
+    $deptResult = $db->query("SELECT id, name FROM departments ORDER BY name ASC");
+    if ($deptResult) {
+        $departments = $deptResult->fetch_all(MYSQLI_ASSOC);
+    }
+  
+
+    require __DIR__ . '/../views/user/create.php';
+}
         /*
         |--------------------------------------------------------------------------
         | STORE USER
         |--------------------------------------------------------------------------
-        */public function store()
+        */
+        public function store()
 {
     Guard::adminOnly();
 
@@ -112,7 +125,7 @@
     'role_id' => $role_id
 ];
 
-$this->userModel->create($data);
+
 
     $this->userModel->create($data);
 
@@ -126,28 +139,80 @@ $this->userModel->create($data);
         |--------------------------------------------------------------------------
         | EDIT USER
         |--------------------------------------------------------------------------
-        */
-        public function edit()
-        {
-            Guard::adminOnly();
+        */public function edit()
+{
+    Guard::adminOnly();
 
-            if (!isset($_GET['id'])) {
-                die("User ID missing");
-            }
+    if (!isset($_GET['id'])) {
+        die("User ID missing");
+    }
 
-            $editUser = $this->userModel->find($_GET['id']);
+    $id = (int) $_GET['id'];
 
-            if (!$editUser) {
-                die("User not found");
-            }
+    $db = (new Database())->connect();
 
-            $db = (new Database())->connect();
+    /*
+    |--------------------------------------------------------------------------
+    | GET USER
+    |--------------------------------------------------------------------------
+    */
+    $stmt = $db->prepare("
+        SELECT * FROM users
+        WHERE id = ?
+        LIMIT 1
+    ");
 
-            $departments = $db->query("SELECT * FROM departments")->fetch_all(MYSQLI_ASSOC);
-            $roles = $db->query("SELECT * FROM roles")->fetch_all(MYSQLI_ASSOC);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
 
-            require __DIR__ . '/../views/user/edit.php';
-        }
+    $editUser = $stmt->get_result()->fetch_assoc();
+
+    if (!$editUser) {
+        die("User not found");
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET USER ROLE FROM PIVOT TABLE
+    |--------------------------------------------------------------------------
+    */
+    $roleStmt = $db->prepare("
+        SELECT role_id
+        FROM role_user
+        WHERE user_id = ?
+        LIMIT 1
+    ");
+
+    $roleStmt->bind_param("i", $id);
+    $roleStmt->execute();
+
+    $roleData = $roleStmt->get_result()->fetch_assoc();
+
+    // attach role_id to user array
+    $editUser['role_id'] = $roleData['role_id'] ?? null;
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET DEPARTMENTS
+    |--------------------------------------------------------------------------
+    */
+    $departments = $db->query("
+        SELECT * FROM departments
+        ORDER BY name ASC
+    ")->fetch_all(MYSQLI_ASSOC);
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET ROLES
+    |--------------------------------------------------------------------------
+    */
+    $roles = $db->query("
+        SELECT * FROM roles
+        ORDER BY name ASC
+    ")->fetch_all(MYSQLI_ASSOC);
+
+    require __DIR__ . '/../views/user/edit.php';
+}
 
         /*
         |--------------------------------------------------------------------------

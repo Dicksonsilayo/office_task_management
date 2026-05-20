@@ -21,7 +21,42 @@ foreach ($tasks as $t) {
     elseif ($status === 'in_progress') $inProgress++;
     elseif ($status === 'completed') $completed++;
 }
-?>
+?><style>
+    .task-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Make all buttons uniform */
+.task-actions a,
+.task-actions button {
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Colors */
+.btn-warning { background: #f59e0b; color: white; }
+.btn-success { background: #22c55e; color: white; }
+.btn-danger { background: #ef4444; color: white; }
+.btn-primary { background: #3b82f6; color: white; }
+
+/* Hover effect */
+.task-actions button:hover,
+.task-actions a:hover {
+    opacity: 0.85;
+    transform: scale(1.03);
+    transition: 0.2s;
+}
+</style>
 
 <div class="page-header">
 
@@ -32,10 +67,33 @@ foreach ($tasks as $t) {
         </p>
     </div>
 
-    <?php if (($user['role'] ?? '') === 'admin' || ($user['role'] ?? '') === 'hod'): ?>
-        <a href="index.php?page=create_task" class="btn-primary">
-            + Assign Task
-        </a>
+  <?php
+
+/*
+|--------------------------------------------------------------------------
+| FIX FOR PIVOT ROLE SYSTEM
+|--------------------------------------------------------------------------
+*/
+$userRoles = $user['roles'] ?? [];
+
+if (is_string($userRoles)) {
+    $userRoles = explode(',', strtolower($userRoles));
+}
+
+$userRoles = array_map('trim', $userRoles);
+
+?>
+
+<?php if (
+    in_array('admin', $userRoles) ||
+    in_array('hod', $userRoles)
+): ?>
+
+    <a href="index.php?page=create_task" class="btn-primary">
+        + Assign Task
+    </a>
+
+
     <?php endif; ?>
 
 </div>
@@ -130,12 +188,24 @@ foreach ($tasks as $t) {
 
                 </form>
 
-    <?php if ($role === 'admin'): ?>
+   <?php
+
+$roles = $user['roles'] ?? [];
+
+if (is_string($roles)) {
+    $roles = array_map('trim', explode(',', strtolower($roles)));
+}
+
+?>
+
+<?php if (in_array('admin', $roles)): ?>
+
     <a href="index.php?page=delete_task&id=<?= $id ?>"
        onclick="return confirm('Are you sure you want to delete this task?')"
        class="btn-danger">
         Delete
     </a>
+
 
 
 <?php endif; ?>

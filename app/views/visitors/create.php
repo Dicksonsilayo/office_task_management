@@ -40,7 +40,7 @@
                 <textarea name="purpose" required></textarea>
             </div>
 
-            <button class="btn-submit">Save Visitor</button>
+            <button class="btn-submit">register Visitor</button>
 
         </form>
 
