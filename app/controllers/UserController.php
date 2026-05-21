@@ -131,7 +131,7 @@
 
     $_SESSION['success'] = "User created successfully";
 
-    header("Location: index.php?page=users");
+    header("Location: index.php?page=create_user");
     exit;
 }
 
@@ -139,7 +139,9 @@
         |--------------------------------------------------------------------------
         | EDIT USER
         |--------------------------------------------------------------------------
-        */public function edit()
+        */
+public function edit()
+
 {
     Guard::adminOnly();
 
@@ -218,7 +220,9 @@
         |--------------------------------------------------------------------------
         | UPDATE USER
         |--------------------------------------------------------------------------
-        */public function update()
+        */
+    public function update()
+
 {
     Guard::adminOnly();
 
@@ -276,8 +280,9 @@
 
     $_SESSION['success'] = "User updated successfully";
 
-    header("Location: index.php?page=users");
+    header("Location: index.php?page=edit_user");
     exit;
+
 }
 
         /*
@@ -288,10 +293,6 @@
         public function delete()
         {
             Guard::adminOnly();
-
-            if (!isset($_GET['id'])) {
-                die("User ID missing");
-            }
 
             $this->userModel->delete($_GET['id']);
 

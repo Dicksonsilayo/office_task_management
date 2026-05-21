@@ -17,14 +17,16 @@ $roles = $roles ?? [];
         <!-- SUCCESS -->
         <?php if (!empty($_SESSION['success'])): ?>
             <div class="alert-success">
-                <?= $_SESSION['success']; unset($_SESSION['success']); ?>
+                <?= $_SESSION['success'];
+                 unset($_SESSION['success']); ?>
             </div>
         <?php endif; ?>
 
         <!-- ERROR -->
         <?php if (!empty($_SESSION['error'])): ?>
             <div class="alert-error">
-                <?= $_SESSION['error']; unset($_SESSION['error']); ?>
+                <?= $_SESSION['error'];
+                 unset($_SESSION['error']); ?>
             </div>
         <?php endif; ?>
 

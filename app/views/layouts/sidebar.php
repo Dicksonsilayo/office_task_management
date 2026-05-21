@@ -65,9 +65,7 @@ $active = $_GET['page'] ?? 'dashboard';
             Tasks
         </a>
 
-        <a href="index.php?page=reports">
-            Reports
-        </a>
+       
 
     <!-- RECEPTIONIST -->
     <?php elseif (in_array('receptionist', $userRoles)): ?>
