@@ -82,37 +82,38 @@
     // VALIDATION
     // =========================
     if (strlen($name) < 3 || strlen($name) > 100) {
-        $_SESSION['error'] = "Name must be between 3 and 100 characters";
+       Flash::set('error','name shold not exceed 100 character and should not be less than 3');
+       
         header("Location: index.php?page=create_user");
         exit;
     }
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $_SESSION['error'] = "Invalid email format";
+      Flash::set('error','Invalid email format');
         header("Location: index.php?page=create_user");
         exit;
     }
 
     if (strlen($email) > 150) {
-        $_SESSION['error'] = "Email too long";
+      Flash::set('error','Email too long');
         header("Location: index.php?page=create_user");
         exit;
     }
 
     if (strlen($password) < 6 || strlen($password) > 50) {
-        $_SESSION['error'] = "Password must be 6–50 characters";
+        Flash::set('error','Password must be 6–50 characters');
         header("Location: index.php?page=create_user");
         exit;
     }
 
     if ($password !== $confirm) {
-        $_SESSION['error'] = "Passwords do not match";
+        Flash::set('error','Passwords do not match');
         header("Location: index.php?page=create_user");
         exit;
     }
 
     if (!is_numeric($department_id) || !is_numeric($role_id)) {
-        $_SESSION['error'] = "Invalid department or role";
+       Flash::set('error','Invalid department or role');
         header("Location: index.php?page=create_user");
         exit;
     }
@@ -129,7 +130,7 @@
 
     $this->userModel->create($data);
 
-    $_SESSION['success'] = "User created successfully";
+    Flash::set('success','User created successfully');
 
     header("Location: index.php?page=create_user");
     exit;
@@ -237,19 +238,19 @@ public function edit()
     $role_id = $_POST['role_id'] ?? null;
 
     if ($id <= 0) {
-        $_SESSION['error'] = "Invalid user ID";
+        Flash::set('error','Invalid user ID');
         header("Location: index.php?page=users");
         exit;
     }
 
     if (strlen($name) < 3 || strlen($name) > 100) {
-        $_SESSION['error'] = "Invalid name length";
+        Flash::set('error','Invalid name length');
         header("Location: index.php?page=edit_user&id=$id");
         exit;
     }
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $_SESSION['error'] = "Invalid email";
+        Flash::set('error','Invalid email');
         header("Location: index.php?page=edit_user&id=$id");
         exit;
     }
@@ -263,7 +264,7 @@ public function edit()
         }
 
         if ($password !== $confirm) {
-            $_SESSION['error'] = "Passwords do not match";
+          Flash::set('error','Passwords do not match');
             header("Location: index.php?page=edit_user&id=$id");
             exit;
         }
@@ -278,7 +279,7 @@ public function edit()
         'role_id' => (int)$role_id
     ]);
 
-    $_SESSION['success'] = "User updated successfully";
+    Flash::set('success','User updated successfully');
 
     header("Location: index.php?page=edit_user");
     exit;
@@ -296,7 +297,7 @@ public function edit()
 
             $this->userModel->delete($_GET['id']);
 
-            $_SESSION['success'] = "User deleted successfully";
+            Flash::set('success','User deleted successfully');
 
             header("Location: index.php?page=users");
             exit;

@@ -7,6 +7,7 @@ require_once __DIR__ . '/../models/Task.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Goal.php';
 require_once __DIR__ . '/../models/Notification.php';
+require_once __DIR__ . '/../models/TaskLogs.php';
 
 class TaskController
 {
@@ -19,6 +20,17 @@ class TaskController
 
     /*
     |--------------------------------------------------------------------------
+    | CENTRAL AUDIT LOGGER (CLEAN & REUSABLE)
+    |--------------------------------------------------------------------------
+    */
+    private function audit($taskId, $userId, $action, $description)
+    {
+        $log = new TaskLog();
+        $log->create($taskId, $userId, $action, $description);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | TASK LIST
     |--------------------------------------------------------------------------
     */
@@ -27,7 +39,6 @@ class TaskController
         Auth::requireLogin();
 
         $user = Auth::user();
-
         $tasks = $this->taskModel->getAllByRole($user);
 
         require __DIR__ . '/../views/tasks/index.php';
@@ -43,58 +54,32 @@ class TaskController
         Auth::requireLogin();
 
         $user = Auth::user();
-
         $id = (int) ($_GET['id'] ?? 0);
 
-        // VALIDATE TASK ID
         if ($id <= 0) {
-
-            $_SESSION['error'] = "Invalid task ID";
-
+           Flash::set('error','Invalid task ID');
             header("Location: index.php?page=tasks");
             exit;
         }
 
-        // CHECK ACCESS
         if (!$this->taskModel->canAccessTask($id, $user)) {
-
-            $_SESSION['error'] = "Access denied";
-
+            Flash::set('error','Access denied');
             header("Location: index.php?page=tasks");
             exit;
         }
 
-        // GET TASK
         $task = $this->taskModel->getById($id);
 
         if (!$task) {
-
             $_SESSION['error'] = "Task not found";
-
             header("Location: index.php?page=tasks");
             exit;
         }
 
-        // GET COMMENTS + LOGS
         $comments = $this->taskModel->getComments($id);
-        $logs     = $this->taskModel->getLogs($id);
+        $logs = $this->taskModel->getLogs($id);
 
         require __DIR__ . '/../views/tasks/show.php';
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | CREATE TASK FORM
-    |--------------------------------------------------------------------------
-    */
-    public function create()
-    {
-        Auth::requireLogin();
-
-        $users = (new User())->getAll();
-        $goals = (new Goal())->getAll();
-
-        require __DIR__ . '/../views/tasks/create.php';
     }
 
     /*
@@ -107,7 +92,6 @@ class TaskController
         Auth::requireLogin();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-
             header("Location: index.php?page=tasks");
             exit;
         }
@@ -119,131 +103,100 @@ class TaskController
 
         $errors = [];
 
-        // VALIDATION
-        if ($title === '') {
-            $errors[] = "Title is required";
-        }
+        if ($title === '') $errors[] = "Title is required";
+        if ($description === '') $errors[] = "Description is required";
+        if (empty($_POST['assigned_to'])) $errors[] = "Assign task to user";
 
-        if (strlen($title) > 150) {
-            $errors[] = "Title too long";
-        }
-
-        if ($description === '') {
-            $errors[] = "Description required";
-        }
-
-        if (strlen($description) > 200) {
-            $errors[] = "Description too long";
-        }
-
-        if (empty($_POST['assigned_to'])) {
-            $errors[] = "Assign task to user";
-        }
-
-        // HANDLE ERRORS
         if (!empty($errors)) {
-
-            $_SESSION['errors'] = $errors;
-
+            Flash::set('errors','$errors');
             header("Location: index.php?page=create_task");
             exit;
         }
 
-        // PREPARE DATA
         $data = [
-
             'title' => $title,
             'description' => $description,
             'priority' => $_POST['priority'] ?? 'low',
             'deadline' => $_POST['deadline'] ?? null,
             'notes' => $_POST['notes'] ?? '',
-
             'assigned_by' => $user['id'],
             'assigned_to' => (int) $_POST['assigned_to'],
-
             'goal_id' => $_POST['goal_id'] ?? null,
-
             'status' => 'pending',
-
             'department_id' => $user['department_id']
         ];
 
-        $this->taskModel->create($data);
-        $notification = new Notification();
+        $taskId = $this->taskModel->create($data);
 
-$notification->create(
-    $data['assigned_to'],
-    null,
-    'You have been assigned a new task: ' . $title
-);
+        // AUDIT
+       $this->audit($taskId, $user['id'], 'task_assigned', 'Task assigned to user ID ' . $data['assigned_to']);
 
-        $_SESSION['success'] = "Task created successfully";
-
+        // NOTIFICATION
+        (new Notification())->create(
+            $data['assigned_to'],
+            $taskId,
+            "New task assigned: {$title}"
+        );
+Flash::set('success','Task created successfully');
         header("Location: index.php?page=tasks");
         exit;
     }
 
     /*
     |--------------------------------------------------------------------------
-    | UPDATE STATUS
+    | UPDATE STATUS (FULL AUDIT WORKFLOW)
     |--------------------------------------------------------------------------
     */
     public function updateStatus()
     {
         Auth::requireLogin();
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
-            $taskId = (int) ($_POST['task_id'] ?? 0);
+        $user = Auth::user();
 
-            $status = $_POST['status'] ?? 'pending';
+        $taskId = (int) ($_POST['task_id'] ?? 0);
+        $status = $_POST['status'] ?? '';
 
-            if ($taskId <= 0) {
+        $allowed = [
+            'in_progress',
+            'reviewed',
+            'satisfied',
+            'not_satisfied',
+            'completed'
+        ];
 
-                $_SESSION['error'] = "Invalid task";
-
-                header("Location: index.php?page=tasks");
-                exit;
-            }
-
-            $this->taskModel->updateStatus($taskId, $status);
-            $task = $this->taskModel->getById($taskId);
-
-$notification = new Notification();
-
-/*
-|--------------------------------------------------------------------------
-| REVIEW NOTIFICATION
-|--------------------------------------------------------------------------
-*/
-if ($status === 'in_progress') {
-
-    $notification->create(
-        $task['assigned_by'],
-        $taskId,
-        'Task "' . $task['title'] . '" is under review'
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| SATISFIED NOTIFICATION
-|--------------------------------------------------------------------------
-*/
-if ($status === 'completed') {
-
-    $notification->create(
-        $task['assigned_by'],
-        $taskId,
-        'Task "' . $task['title'] . '" was marked satisfied'
-    );
-}
-
-            $_SESSION['success'] = "Task updated";
-
+        if ($taskId <= 0 || !in_array($status, $allowed)) {
+            Flash::set('error','Invalid request');
             header("Location: index.php?page=tasks");
             exit;
         }
+
+        $this->taskModel->updateStatus($taskId, $status);
+        $task = $this->taskModel->getById($taskId);
+
+        // AUDIT
+        $this->audit(
+            $taskId,
+            $user['id'],
+            'status_changed',
+            "Status updated to {$status}"
+        );
+
+        // NOTIFICATIONS (SMART FLOW)
+        $notification = new Notification();
+
+        $message = "Task '{$task['title']}' updated to {$status}";
+
+        $notification->create($task['assigned_by'], $taskId, $message);
+
+        if (in_array($status, ['satisfied', 'not_satisfied'])) {
+            $notification->create($task['assigned_to'], $taskId, $message);
+        }
+
+      Flash::set('succes','task updated successfully');
+        header("Location: index.php?page=task_show&id=" . $taskId);
+        exit;
     }
 
     /*
@@ -256,13 +209,16 @@ if ($status === 'completed') {
         Auth::requireLogin();
 
         $user = Auth::user();
+        $roles = $user['roles'] ?? [];
 
-        $role = strtolower($user['role'] ?? 'staff');
+        if (is_string($roles)) {
+            $roles = explode(',', strtolower($roles));
+        }
 
-        if ($role !== 'admin') {
+        $roles = array_map('trim', $roles);
 
+        if (!in_array('admin', $roles)) {
             $_SESSION['error'] = "Access denied";
-
             header("Location: index.php?page=tasks");
             exit;
         }
@@ -270,60 +226,47 @@ if ($status === 'completed') {
         $id = (int) ($_GET['id'] ?? 0);
 
         if ($id <= 0) {
-
             $_SESSION['error'] = "Invalid task";
-
             header("Location: index.php?page=tasks");
             exit;
         }
 
+        $this->audit($id, $user['id'], 'task_deleted', 'Task removed from system');
+
         $this->taskModel->delete($id);
 
         $_SESSION['success'] = "Task deleted successfully";
-
         header("Location: index.php?page=tasks");
         exit;
     }
 
     /*
     |--------------------------------------------------------------------------
-    | ADD COMMENT
+    | ADD COMMENT + AUDIT
     |--------------------------------------------------------------------------
     */
     public function addComment()
     {
         Auth::requireLogin();
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
-            $taskId = (int) ($_POST['task_id'] ?? 0);
+        $user = Auth::user();
 
-            $description = trim($_POST['description'] ?? '');
+        $taskId = (int) ($_POST['task_id'] ?? 0);
+        $description = trim($_POST['description'] ?? '');
 
-            $userId = Auth::user()['id'];
-
-            if ($taskId <= 0) {
-
-                $_SESSION['error'] = "Invalid task";
-
-                header("Location: index.php?page=tasks");
-                exit;
-            }
-
-            if ($description === '') {
-
-                $_SESSION['error'] = "Comment required";
-
-                header("Location: index.php?page=task_show&id=" . $taskId);
-                exit;
-            }
-
-            $this->taskModel->addComment($taskId, $userId, $description);
-
-            $_SESSION['success'] = "Comment added";
-
-            header("Location: index.php?page=task_show&id=" . $taskId);
+        if ($taskId <= 0 || $description === '') {
+            Flash::set('error','invalid comments');
+            header("Location: index.php?page=tasks");
             exit;
         }
+
+        $this->taskModel->addComment($taskId, $user['id'], $description);
+
+        $this->audit($taskId, $user['id'], 'comment_added', 'Task review/comment added');
+        Flash::set('success','comments added successfully');
+        header("Location: index.php?page=task_show&id=" . $taskId);
+        exit;
     }
 }
