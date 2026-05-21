@@ -44,10 +44,14 @@ foreach ($tasks as $t) {
 }
 
 /* Colors */
-.btn-warning { background: #f59e0b; color: white; }
-.btn-success { background: #22c55e; color: white; }
-.btn-danger { background: #ef4444; color: white; }
-.btn-primary { background: #3b82f6; color: white; }
+.btn-warning {
+     background: #f59e0b; 
+     color: white;
+     min-width: 200px;
+     }
+.btn-success { background: #22c55e; color: white; min-width: 200px; }
+.btn-danger { background: #ef4444; color: white;  min-width: 200px;}
+.btn-primary { background: #3b82f6; color: white; min-width: 200px; }
 
 /* Hover effect */
 .task-actions button:hover,
@@ -226,5 +230,6 @@ if (is_string($roles)) {
 <?php endif; ?>
 
 </div>
+
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

@@ -169,6 +169,13 @@ class TaskController
         ];
 
         $this->taskModel->create($data);
+        $notification = new Notification();
+
+$notification->create(
+    $data['assigned_to'],
+    null,
+    'You have been assigned a new task: ' . $title
+);
 
         $_SESSION['success'] = "Task created successfully";
 
@@ -200,6 +207,37 @@ class TaskController
             }
 
             $this->taskModel->updateStatus($taskId, $status);
+            $task = $this->taskModel->getById($taskId);
+
+$notification = new Notification();
+
+/*
+|--------------------------------------------------------------------------
+| REVIEW NOTIFICATION
+|--------------------------------------------------------------------------
+*/
+if ($status === 'in_progress') {
+
+    $notification->create(
+        $task['assigned_by'],
+        $taskId,
+        'Task "' . $task['title'] . '" is under review'
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| SATISFIED NOTIFICATION
+|--------------------------------------------------------------------------
+*/
+if ($status === 'completed') {
+
+    $notification->create(
+        $task['assigned_by'],
+        $taskId,
+        'Task "' . $task['title'] . '" was marked satisfied'
+    );
+}
 
             $_SESSION['success'] = "Task updated";
 

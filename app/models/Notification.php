@@ -123,5 +123,43 @@ public function markAllRead($userId)
     $stmt->bind_param("i", $userId);
     return $stmt->execute();
 }
+/*
+|--------------------------------------------------------------------------
+| GENERATE OVERDUE NOTIFICATIONS
+|--------------------------------------------------------------------------
+*/
+public function generateOverdueNotifications()
+{
+    $query = "
+        SELECT *
+        FROM tasks
+        WHERE deadline IS NOT NULL
+        AND deadline < NOW()
+        AND status != 'completed'
+    ";
+
+    $result = $this->conn->query($query);
+
+    while ($task = $result->fetch_assoc()) {
+
+        $userId = $task['assigned_to'];
+
+        $message = 'Task "' . $task['title'] . '" is overdue';
+
+        /*
+        |--------------------------------------------------------------------------
+        | PREVENT DUPLICATE NOTIFICATIONS
+        |--------------------------------------------------------------------------
+        */
+        if (!$this->exists($userId, $task['id'], $message)) {
+
+            $this->create(
+                $userId,
+                $task['id'],
+                $message
+            );
+        }
+    }
+}
 
 }

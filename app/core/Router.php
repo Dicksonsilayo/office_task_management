@@ -241,6 +241,12 @@ class Router
                 (new ProfileController())->update();
                 break;
 
+            case 'mark_all_read':
+                Guard::auth();
+                require_once __DIR__ . '/../controllers/NotificationController.php';
+                (new NotificationController())->markAllRead();
+                break;
+
             /*
             |--------------------------------------------------------------------------
             | DEFAULT

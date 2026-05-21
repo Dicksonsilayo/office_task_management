@@ -4,6 +4,7 @@ require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Task.php';
 require_once __DIR__ . '/../models/Visitor.php';
+require_once __DIR__ . '/../models/Notification.php';
 class DashboardController
 {
     public function index()
@@ -15,6 +16,8 @@ class DashboardController
         $userModel = new User();
         $taskModel = new Task();
         $visitorModel = new Visitor();
+        $notification = new Notification();
+        $notification->generateOverdueNotifications();
 
         $data = [
             'user' => $authUser,
