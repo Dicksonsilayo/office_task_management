@@ -1,4 +1,5 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
+<?php require_once __DIR__ . '/../../core/Flash.php'; ?>
 
 <?php
 $user = Auth::user();
@@ -7,21 +8,42 @@ $task = $task ?? [];
 
 <div class="page-wrapper">
 
-    <!-- ALERTS -->
-    <?php if (!empty($_SESSION['success'])): ?>
-        <div class="alert-success">
-            <?= $_SESSION['success']; unset($_SESSION['success']); ?>
+    <!-- =========================
+         FLASH MESSAGES (FIXED)
+    ========================== -->
+    <?php if ($msg = Flash::get('success')): ?>
+        <div class="alert-success no-print">
+            <?= htmlspecialchars($msg); ?>
         </div>
     <?php endif; ?>
 
-    <?php if (!empty($_SESSION['error'])): ?>
-        <div class="alert-error">
-            <?= $_SESSION['error']; unset($_SESSION['error']); ?>
+    <?php if ($msg = Flash::get('error')): ?>
+        <div class="alert-error no-print">
+            <?= htmlspecialchars($msg); ?>
         </div>
     <?php endif; ?>
 
-    <!-- TASK DETAIL -->
+    <!-- =========================
+         PRINT BUTTON
+    ========================== -->
+    <div class="no-print" style="display:flex; justify-content:flex-end; margin-bottom:15px;">
+
+        <button onclick="window.print()" class="btn-primary">
+            🖨️ Print Task Report
+        </button>
+
+    </div>
+
+    <!-- =========================
+         TASK DETAIL
+    ========================== -->
     <div class="task-detail">
+
+        <!-- PRINT TITLE (ONLY PRINT) -->
+        <div class="print-only" style="display:none; text-align:center; margin-bottom:20px;">
+            <h2>TASK REPORT</h2>
+            <hr>
+        </div>
 
         <!-- HEADER -->
         <div class="task-top">
@@ -80,9 +102,8 @@ $task = $task ?? [];
         </div>
 
         <!-- =========================
-            AUDIT TIMELINE (UPGRADED)
+            TIMELINE
         ========================== -->
-
         <h2 class="section-title">Activity Timeline</h2>
 
         <?php if (!empty($logs)): ?>
@@ -94,7 +115,6 @@ $task = $task ?? [];
                     <?php
                         $action = $log['action'] ?? 'unknown';
 
-                        // ICON LOGIC (FIXED HERE)
                         $icon = '📝';
 
                         if ($action === 'task_created') $icon = '🟢';
@@ -113,10 +133,7 @@ $task = $task ?? [];
                         <div class="timeline-content">
 
                             <div class="timeline-header">
-                                <strong>
-                                    <?= htmlspecialchars($log['user_name'] ?? 'System') ?>
-                                </strong>
-
+                                <strong><?= htmlspecialchars($log['user_name'] ?? 'System') ?></strong>
                                 <span class="timeline-time">
                                     <?= htmlspecialchars($log['created_at'] ?? '') ?>
                                 </span>
@@ -146,10 +163,12 @@ $task = $task ?? [];
 
         <?php endif; ?>
 
-        <!-- COMMENTS -->
+        <!-- =========================
+            COMMENTS
+        ========================== -->
         <h2 class="section-title">Comments</h2>
 
-        <form method="POST" action="index.php?page=add_comment" class="comment-form">
+        <form method="POST" action="index.php?page=add_comment" class="comment-form no-print">
 
             <input type="hidden" name="task_id" value="<?= $task['id'] ?>">
 
@@ -183,5 +202,47 @@ $task = $task ?? [];
 
     </div>
 </div>
+
+<!-- =========================
+     PRINT STYLES
+========================= -->
+<style>
+
+@media print {
+
+    body {
+        background: white !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+       .sidebar,
+    .print-btn {
+        display: none !important;
+    }
+
+
+    .task-detail {
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .page-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .timeline-item {
+        break-inside: avoid;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+}
+
+</style>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

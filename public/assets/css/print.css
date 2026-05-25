@@ -1,0 +1,82 @@
+@page {
+    size: A4;
+    margin: 15mm;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: white;
+    margin: 0;
+}
+
+/* ===== GLOBAL PRINT WRAPPER ===== */
+.print-page {
+    width: 100%;
+    max-width: 190mm;
+    margin: auto;
+    padding: 10mm;
+}
+
+/* ===== CARD STYLE (USED FOR ALL PRINT DOCS) ===== */
+.print-card {
+    background: white;
+    border: 2px dashed #3498db;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+
+/* ===== TITLE BAR ===== */
+.print-title {
+    background: #3498db;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+/* ===== TABLE STYLE (IF NEEDED) ===== */
+.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.print-table th {
+    background: #e5e5e5;
+    border: 1px solid #000;
+    padding: 8px;
+}
+
+.print-table td {
+    border: 1px solid #000;
+    padding: 8px;
+}
+
+/* ===== PRINT BUTTON ===== */
+.print-btn {
+    margin-top: 15px;
+    padding: 8px 12px;
+    background: #2ecc71;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+/* ===== HIDE ELEMENTS IN PRINT ===== */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+    }
+
+    .print-card {
+        border: 1px solid #000;
+        box-shadow: none;
+    }
+}

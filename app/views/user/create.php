@@ -15,21 +15,29 @@ $roles = $roles ?? [];
         </div>
 
         <!-- SUCCESS -->
-        <?php if (!empty($_SESSION['success'])): ?>
-            <div class="alert-success">
-                <?= $_SESSION['success'];
-                 unset($_SESSION['success']); ?>
-            </div>
-        <?php endif; ?>
+        <?php require_once __DIR__ . '/../../core/Flash.php'; ?>
 
-        <!-- ERROR -->
-        <?php if (!empty($_SESSION['error'])): ?>
-            <div class="alert-error">
-                <?= $_SESSION['error'];
-                 unset($_SESSION['error']); ?>
-            </div>
-        <?php endif; ?>
+<!-- SUCCESS -->
+<?php if ($message = Flash::get('success')): ?>
 
+    <div class="alert-success flash-message">
+
+        <?= htmlspecialchars($message) ?>
+
+    </div>
+
+<?php endif; ?>
+
+<!-- ERROR -->
+<?php if ($message = Flash::get('error')): ?>
+
+    <div class="alert-error flash-message">
+
+        <?= htmlspecialchars($message) ?>
+
+    </div>
+
+<?php endif; ?>
         <form method="POST" action="index.php?page=store_user">
  <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
             ↩️ Back
@@ -205,4 +213,24 @@ $roles = $roles ?? [];
 
 </style>
 
+<script>
+
+setTimeout(() => {
+
+    document.querySelectorAll('.flash-message').forEach((msg) => {
+
+        msg.style.transition = '0.5s';
+        msg.style.opacity = '0';
+
+        setTimeout(() => {
+
+            msg.remove();
+
+        }, 500);
+
+    });
+
+}, 3000);
+
+</script>
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

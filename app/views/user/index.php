@@ -49,7 +49,7 @@
 
         <td>
             <a href="index.php?page=edit_user&id=<?= $u['id'] ?>">Edit</a>
-            <a href="index.php?page=delete_user&id=<?= $u['id'] ?>">Delete</a>
+            <a href="index.php?page=delete_user&id=<?= $u['id'] ?>" onclick="return confirm('do you want to delete this user?')">Delete</a>
         </td>
 
     </tr>

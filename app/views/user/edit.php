@@ -222,5 +222,39 @@ $currentRoleId = $editUser['role_id'] ?? null;
 }
 
 </style>
+<script>
+
+setTimeout(() => {
+
+    const success = document.querySelector('.alert-success');
+    const error = document.querySelector('.alert-error');
+
+    if (success) {
+
+        success.style.transition = '0.5s';
+        success.style.opacity = '0';
+
+        setTimeout(() => {
+
+            success.remove();
+
+        }, 500);
+    }
+
+    if (error) {
+
+        error.style.transition = '0.5s';
+        error.style.opacity = '0';
+
+        setTimeout(() => {
+
+            error.remove();
+
+        }, 400);
+    }
+
+}, 2000);
+
+</script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>
