@@ -5,6 +5,9 @@
     <div class="notification-top">
 
         <div>
+             <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+            ↩️ Back
+        </a>
             <h1>Notifications</h1>
             <p>Recent system updates</p>
         </div>

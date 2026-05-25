@@ -8,6 +8,9 @@ $attendanceModel = new VisitorAttendance();
 ?>
 
 <div class="page-header">
+     <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+            ↩️ Back
+        </a>
     <h1>Visitors</h1>
 
     <a href="index.php?page=create_visitor" class="btn-primary">

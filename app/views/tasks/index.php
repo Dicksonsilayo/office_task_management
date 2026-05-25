@@ -43,9 +43,18 @@ foreach ($tasks as $t) {
 <!-- HEADER -->
 <div class="page-header">
 
-    <div>
-        <h1>Tasks</h1>
-        <p class="page-subtitle">Manage and track all assigned tasks</p>
+    <div style="display:flex; align-items:center; gap:12px;">
+
+        <!-- BACK BUTTON -->
+        <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+            ↩️ Back
+        </a>
+
+        <div>
+            <h1>Tasks</h1>
+            <p class="page-subtitle">Manage and track all assigned tasks</p>
+        </div>
+
     </div>
 
     <?php if (in_array('admin', $userRoles) || in_array('hod', $userRoles)): ?>
@@ -55,7 +64,6 @@ foreach ($tasks as $t) {
     <?php endif; ?>
 
 </div>
-
 <!-- STATS -->
 <div class="stats-grid">
 

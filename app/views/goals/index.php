@@ -1,9 +1,25 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
+<?php if ($message = Flash::get('success')): ?>
 
+    <div class="success-message">
+        <?= htmlspecialchars($message); ?>
+    </div>
+
+<?php endif; ?>
+
+<?php if ($message = Flash::get('error')): ?>
+
+    <div class="error-message">
+        <?= $message; // allow <br> ?>
+    </div>
+
+<?php endif; ?>
 <div class="page-header">
 
     <div>
-
+ <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+            ↩️ Back
+        </a>
         <h1>Goals</h1>
 
         <p class="page-subtitle">

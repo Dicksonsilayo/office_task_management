@@ -1,5 +1,5 @@
     <?php
-
+    require_once __DIR__. "/../core/Flash.php";
     require_once __DIR__ . '/../models/User.php';
     require_once __DIR__ . '/../configs/database.php';
     require_once __DIR__ . '/../core/Auth.php';
@@ -280,8 +280,8 @@ public function edit()
     ]);
 
     Flash::set('success','User updated successfully');
+    header("Location: index.php?page=edit_user&id=" . $id);
 
-    header("Location: index.php?page=edit_user");
     exit;
 
 }

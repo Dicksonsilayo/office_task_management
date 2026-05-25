@@ -50,9 +50,6 @@ $active = $_GET['page'] ?? 'dashboard';
             Visitors
         </a>
 
-        <a href="index.php?page=reports">
-            Reports
-        </a>
 
     <!-- HOD -->
     <?php elseif (in_array('hod', $userRoles)): ?>

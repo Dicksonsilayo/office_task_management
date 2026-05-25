@@ -1,7 +1,9 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
 <div class="page-header">
-
+ <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+            ↩️ Back
+        </a>
     <h1>Users Management</h1>
 
     <a href="index.php?page=create_user" class="btn-primary">

@@ -3,6 +3,9 @@
 <div class="page-header">
 
     <div>
+         <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+            ↩️ Back
+        </a>
         <h1>Visitor Attendance History</h1>
 
         <p class="page-subtitle">

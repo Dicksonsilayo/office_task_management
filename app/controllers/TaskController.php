@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../configs/database.php';
-
+require_once __DIR__.  '/../core/Flash.php';
 require_once __DIR__ . '/../models/Task.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Goal.php';
@@ -43,6 +43,16 @@ class TaskController
 
         require __DIR__ . '/../views/tasks/index.php';
     }
+
+    public function create()
+{
+    Auth::requireLogin();
+
+    $users = (new User())->getAll();
+    $goals = (new Goal())->getAll();
+
+    require __DIR__ . '/../views/tasks/create.php';
+}
 
     /*
     |--------------------------------------------------------------------------

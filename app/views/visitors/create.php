@@ -1,7 +1,9 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
 <div class="visitor-page">
-
+ <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+            ↩️ Back
+        </a>
     <div class="visitor-card">
 
         <!-- HEADER -->

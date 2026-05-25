@@ -28,43 +28,30 @@ class Auth
 
     /*
     |--------------------------------------------------------------------------
-    | GET AUTH USER (WITH PIVOT ROLES FIX)
+    | GET USER (WITH ROLES FROM DB - FIXED)
     |--------------------------------------------------------------------------
-    */
-    public static function user()
-    {
-        if (!isset($_SESSION['user'])) {
-            return null;
-        }
-
-        $user = $_SESSION['user'];
-
-        $db = (new Database())->connect();
-
-        $stmt = $db->prepare("
-            SELECT r.name
-            FROM roles r
-            INNER JOIN role_user ru ON ru.role_id = r.id
-            WHERE ru.user_id = ?
-        ");
-
-        $stmt->bind_param("i", $user['id']);
-        $stmt->execute();
-
-        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-        // convert roles to simple array
-        $roles = [];
-
-        foreach ($result as $r) {
-            $roles[] = strtolower($r['name']);
-        }
-
-        $user['roles'] = $roles;
-
-        return $user;
+    */public static function user()
+{
+    if (!isset($_SESSION['user'])) {
+        return null;
     }
 
+    $user = $_SESSION['user'];
+
+    // ensure roles come from DB column OR session
+    if (!isset($user['roles'])) {
+        $user['roles'] = '';
+    }
+
+    // normalize roles into array
+    if (is_string($user['roles'])) {
+        $user['roles'] = array_filter(
+            array_map('trim', explode(',', strtolower($user['roles'])))
+        );
+    }
+
+    return $user;
+}
     /*
     |--------------------------------------------------------------------------
     | CHECK LOGIN
@@ -73,6 +60,42 @@ class Auth
     public static function check()
     {
         return isset($_SESSION['user']);
+    }
+
+    public static function isLoggedIn()
+    {
+        return self::check();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE CHECKER
+    |--------------------------------------------------------------------------
+    */
+    public static function hasRole($role)
+    {
+        $user = self::user();
+
+        if (!$user || empty($user['roles'])) {
+            return false;
+        }
+
+        return in_array(strtolower($role), $user['roles']);
+    }
+
+    public static function isAdmin()
+    {
+        return self::hasRole('admin');
+    }
+
+    public static function isHead()
+    {
+        return self::hasRole('head');
+    }
+
+    public static function isReceptionist()
+    {
+        return self::hasRole('receptionist');
     }
 
     /*

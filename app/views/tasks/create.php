@@ -5,6 +5,9 @@
     <div class="form-card">
 
         <div class="form-header">
+             <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+            ↩️ Back
+        </a>
             <h1>Create Task</h1>
             <p>Assign a new task to staff</p>
         </div>

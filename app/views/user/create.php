@@ -31,7 +31,9 @@ $roles = $roles ?? [];
         <?php endif; ?>
 
         <form method="POST" action="index.php?page=store_user">
-
+ <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+            ↩️ Back
+        </a>
             <!-- NAME -->
             <div class="form-group">
                 <label>Full Name</label>

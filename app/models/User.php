@@ -17,32 +17,20 @@ class User
     |--------------------------------------------------------------------------
     */
     public function getAll()
-    {
-        $query = "
-            SELECT 
-                users.*,
-                departments.name AS department_name,
-                roles.name AS role
+{
+    $sql = "
+        SELECT 
+            u.*,
+            d.name AS department_name
+        FROM users u
+        LEFT JOIN departments d ON d.id = u.department_id
+        ORDER BY u.id DESC
+    ";
 
-            FROM users
+    $result = $this->conn->query($sql);
 
-            LEFT JOIN departments
-                ON departments.id = users.department_id
-
-            LEFT JOIN role_user
-                ON role_user.user_id = users.id
-
-            LEFT JOIN roles
-                ON roles.id = role_user.role_id
-
-            ORDER BY users.id DESC
-        ";
-
-        $result = $this->conn->query($query);
-
-        return $result->fetch_all(MYSQLI_ASSOC);
-    }
-
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
     /*
     |--------------------------------------------------------------------------
     | FIND USER BY ID

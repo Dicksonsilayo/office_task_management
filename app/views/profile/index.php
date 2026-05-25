@@ -106,7 +106,9 @@ video {
     <?php endif; ?>
 
     <div class="profile-card">
-
+ <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+            ↩️ Back
+        </a>
         <!-- PROFILE + CAMERA WRAPPER -->
         <div class="profile-wrapper">
 

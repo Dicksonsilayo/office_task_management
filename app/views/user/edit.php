@@ -14,23 +14,24 @@ $currentRoleId = $editUser['role_id'] ?? null;
     <div class="form-card">
 
         <div class="form-header">
+             <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+            ↩️ Back
+        </a>
             <h1>Edit User</h1>
             <p>Update user information</p>
         </div>
 
-        <!-- SUCCESS -->
-        <?php if (!empty($_SESSION['success'])): ?>
-            <div class="alert-success">
-                <?= $_SESSION['success']; unset($_SESSION['success']); ?>
-            </div>
-        <?php endif; ?>
+        <?php if ($msg = Flash::get('success')): ?>
+    <div class="alert-success">
+        <?= htmlspecialchars($msg); ?>
+    </div>
+<?php endif; ?>
 
-        <!-- ERROR -->
-        <?php if (!empty($_SESSION['error'])): ?>
-            <div class="alert-error">
-                <?= $_SESSION['error']; unset($_SESSION['error']); ?>
-            </div>
-        <?php endif; ?>
+<?php if ($msg = Flash::get('error')): ?>
+    <div class="alert-error">
+        <?= htmlspecialchars($msg); ?>
+    </div>
+<?php endif; ?>
 
         <form method="POST" action="index.php?page=update_user">
 

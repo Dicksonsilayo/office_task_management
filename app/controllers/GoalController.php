@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../models/Goal.php';
 require_once __DIR__ . '/../core/Auth.php';
+require_once __DIR__ . '/../core/Flash.php';
 
 class GoalController {
 
@@ -27,7 +28,7 @@ class GoalController {
 
     /*
     |--------------------------------------------------------------------------
-    | SHOW CREATE FORM
+    | CREATE FORM
     |--------------------------------------------------------------------------
     */
     public function create() {
@@ -39,63 +40,60 @@ class GoalController {
 
     /*
     |--------------------------------------------------------------------------
-    | STORE GOAL
+    | STORE GOAL (FIXED FLASH SYSTEM)
     |--------------------------------------------------------------------------
-    */public function store()
-{
-    Auth::requireLogin();
+    */
+    public function store()
+    {
+        Auth::requireLogin();
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header("Location: index.php?page=goals");
+            exit;
+        }
 
-        $name = trim($_POST['name']);
+        $name = trim($_POST['name'] ?? '');
         $description = trim($_POST['description'] ?? '');
 
-        // -------------------------
-        // VALIDATION ERRORS ARRAY
-        // -------------------------
         $errors = [];
 
-        // NAME VALIDATION
-        if (empty($name)) {
+        // VALIDATION
+        if ($name === '') {
             $errors[] = "Goal name is required";
         } elseif (strlen($name) > 100) {
             $errors[] = "Goal name must not exceed 100 characters";
         }
 
-        // DESCRIPTION VALIDATION
         if (strlen($description) > 500) {
             $errors[] = "Description must not exceed 500 characters";
         }
 
-        // -------------------------
-        // IF ERRORS FOUND
-        // -------------------------
+        // ERROR HANDLING
         if (!empty($errors)) {
 
-            $_SESSION['error'] = implode("<br>", $errors);
+            Flash::set('error', implode("<br>", $errors));
 
             header("Location: index.php?page=create_goal");
             exit;
         }
 
-        // -------------------------
-        // INSERT DATA
-        // -------------------------
+        // DATA
         $data = [
             'name' => $name,
             'description' => $description,
-            'department_id' => $_POST['department_id'] ?? null,
+            'department_id' => !empty($_POST['department_id']) ? (int) $_POST['department_id'] : null,
             'created_by' => Auth::user()['id']
         ];
 
+        // SAVE
         $this->goalModel->create($data);
 
-        $_SESSION['success'] = "Goal created successfully";
+        Flash::set('success', "Goal created successfully");
 
         header("Location: index.php?page=goals");
         exit;
     }
-}
+
     /*
     |--------------------------------------------------------------------------
     | DELETE GOAL
@@ -103,35 +101,69 @@ class GoalController {
     */
     public function delete() {
 
-    Auth::requireLogin();
+        Auth::requireLogin();
 
-    $id = $_GET['id'];
+        $id = (int) ($_GET['id'] ?? 0);
 
-    $this->goalModel->delete($id);
+        if ($id <= 0) {
 
-    header("Location: index.php?page=goals");
-    exit;
-}
-public function edit() {
+            Flash::set('error', "Invalid goal ID");
 
-    Auth::requireLogin();
+            header("Location: index.php?page=goals");
+            exit;
+        }
 
-    $id = $_GET['id'];
+        $this->goalModel->delete($id);
 
-    $goal = $this->goalModel->find($id);
-
-    require __DIR__ . '/../views/goals/edit.php';
-}
-public function update() {
-
-    Auth::requireLogin();
-
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-        $this->goalModel->update($_POST);
+        Flash::set('success', "Goal deleted successfully");
 
         header("Location: index.php?page=goals");
         exit;
     }
-}
+
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT
+    |--------------------------------------------------------------------------
+    */
+    public function edit() {
+
+        Auth::requireLogin();
+
+        $id = (int) ($_GET['id'] ?? 0);
+
+        $goal = $this->goalModel->find($id);
+
+        if (!$goal) {
+
+            Flash::set('error', "Goal not found");
+
+            header("Location: index.php?page=goals");
+            exit;
+        }
+
+        require __DIR__ . '/../views/goals/edit.php';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE
+    |--------------------------------------------------------------------------
+    */
+    public function update() {
+
+        Auth::requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header("Location: index.php?page=goals");
+            exit;
+        }
+
+        $this->goalModel->update($_POST);
+
+        Flash::set('success', "Goal updated successfully");
+
+        header("Location: index.php?page=goals");
+        exit;
+    }
 }
