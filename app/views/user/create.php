@@ -8,7 +8,9 @@ $roles = $roles ?? [];
 <div class="form-page">
 
     <div class="form-card">
-
+ <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+            ↩️ Back
+        </a>
         <div class="form-header">
             <h1>Create User</h1>
             <p>Add new system user</p>
@@ -39,9 +41,7 @@ $roles = $roles ?? [];
 
 <?php endif; ?>
         <form method="POST" action="index.php?page=store_user">
- <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
-            ↩️ Back
-        </a>
+
             <!-- NAME -->
             <div class="form-group">
                 <label>Full Name</label>

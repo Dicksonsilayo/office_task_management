@@ -16,15 +16,29 @@ class User
     | GET ALL USERS WITH ROLE + DEPARTMENT
     |--------------------------------------------------------------------------
     */
+
     public function getAll()
 {
     $sql = "
         SELECT 
-            u.*,
-            d.name AS department_name
-        FROM users u
-        LEFT JOIN departments d ON d.id = u.department_id
-        ORDER BY u.id DESC
+            users.*,
+            departments.name AS department_name,
+            GROUP_CONCAT(roles.name SEPARATOR ', ') AS roles
+
+        FROM users
+
+        LEFT JOIN departments 
+            ON users.department_id = departments.id
+
+        LEFT JOIN role_user 
+            ON users.id = role_user.user_id
+
+        LEFT JOIN roles 
+            ON role_user.role_id = roles.id
+
+        GROUP BY users.id
+
+        ORDER BY users.id DESC
     ";
 
     $result = $this->conn->query($sql);

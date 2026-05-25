@@ -27,13 +27,15 @@ $task = $task ?? [];
          PRINT BUTTON
     ========================== -->
     <div class="no-print" style="display:flex; justify-content:flex-end; margin-bottom:15px;">
-
+ 
         <button onclick="window.print()" class="btn-primary">
             🖨️ Print Task Report
         </button>
 
     </div>
-
+<a href="javascript:history.back()" class="back-btn" style="text-decoration: none;height: 20px;margin: 40px;position:relative;bottom: 20px;background-color:blue;color:white">
+            ↩️ Back
+        </a>
     <!-- =========================
          TASK DETAIL
     ========================== -->
