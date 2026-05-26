@@ -230,7 +230,7 @@ setTimeout(() => {
 
     });
 
-}, 3000);
+}, 5000);
 
 </script>
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

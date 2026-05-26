@@ -66,7 +66,7 @@ $todayVisitors = $visitorModel->getToday();
 
                         <small>
                             Role:
-                            <?= htmlspecialchars($user['role'] ?? 'N/A'); ?>
+                            <?= htmlspecialchars($user['roles'] ?? 'N/A'); ?>
                         </small>
 
                     </div>

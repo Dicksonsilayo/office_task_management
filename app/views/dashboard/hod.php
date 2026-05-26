@@ -11,25 +11,6 @@
 
 </div>
 
-<!-- STATS -->
-<div class="stats-grid">
-
-    <div class="stat-card">
-        <h3>Total Staff</h3>
-        <p><?= $data['totalUsers'] ?? 0; ?></p>
-    </div>
-
-    <div class="stat-card">
-        <h3>Total Tasks</h3>
-        <p><?= $data['totalTasks'] ?? 0; ?></p>
-    </div>
-
-    <div class="stat-card">
-        <h3>Total Visitors</h3>
-        <p><?= $data['totalVisitors'] ?? 0; ?></p>
-    </div>
-
-</div>
 
 <!-- OPTIONAL SECTION: HOD QUICK VIEW -->
 <div class="task-container">

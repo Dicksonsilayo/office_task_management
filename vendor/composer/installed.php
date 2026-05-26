@@ -5,7 +5,7 @@
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => 'fcee4fcf7b6bc800acdc7f5d90430247afd31742',
+        'reference' => 'a3165fe49dc2c2c62881d7722ac4b62c63640a56',
         'name' => '__root__',
         'dev' => true,
     ),
@@ -16,7 +16,7 @@
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => 'fcee4fcf7b6bc800acdc7f5d90430247afd31742',
+            'reference' => 'a3165fe49dc2c2c62881d7722ac4b62c63640a56',
             'dev_requirement' => false,
         ),
         'dompdf/dompdf' => array(
@@ -53,6 +53,15 @@
             'install_path' => __DIR__ . '/../masterminds/html5',
             'aliases' => array(),
             'reference' => 'fcf91eb64359852f00d921887b219479b4f21251',
+            'dev_requirement' => false,
+        ),
+        'phpmailer/phpmailer' => array(
+            'pretty_version' => 'v7.1.1',
+            'version' => '7.1.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../phpmailer/phpmailer',
+            'aliases' => array(),
+            'reference' => '1bc1716a507a65e039d4ac9d9adebbbd0d346e15',
             'dev_requirement' => false,
         ),
         'sabberworm/php-css-parser' => array(

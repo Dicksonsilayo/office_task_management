@@ -17,23 +17,27 @@ class User
     |--------------------------------------------------------------------------
     */
 
-    public function getAll()
+   public function getAll()
 {
     $sql = "
         SELECT 
             users.*,
             departments.name AS department_name,
-            GROUP_CONCAT(roles.name SEPARATOR ', ') AS roles
+
+            GROUP_CONCAT(
+                DISTINCT roles.name 
+                SEPARATOR ', '
+            ) AS roles
 
         FROM users
 
-        LEFT JOIN departments 
+        LEFT JOIN departments
             ON users.department_id = departments.id
 
-        LEFT JOIN role_user 
+        LEFT JOIN role_user
             ON users.id = role_user.user_id
 
-        LEFT JOIN roles 
+        LEFT JOIN roles
             ON role_user.role_id = roles.id
 
         GROUP BY users.id
