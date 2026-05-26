@@ -1,135 +1,427 @@
 <?php
 
 require_once __DIR__ . '/../layouts/header.php';
-require_once __DIR__ . '/../../models/VisitorAttendance.php';
-
-$attendanceModel = new VisitorAttendance();
 
 ?>
 
 <div class="page-header">
-     <a href="javascript:history.back()" class="back-btn" style="text-decoration: none;">
+
+    <div>
+        <a href="javascript:history.back()" 
+           class="back-btn" 
+           style="text-decoration:none;">
             ↩️ Back
         </a>
-    <h1>Visitors</h1>
 
-    <a href="index.php?page=create_visitor" class="btn-primary">
-        + Add Visitor
-    </a>
+        <h1>Visitors</h1>
+
+        <p class="page-subtitle">
+            Manage office visitors and attendance
+        </p>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+
+        <a href="index.php?page=visitor_history" class="btn-secondary">
+            Attendance History
+        </a>
+
+        <a href="index.php?page=create_visitor" class="btn-primary">
+            + Add Visitor
+        </a>
+
+    </div>
+
 </div>
+
+<!-- FLASH MESSAGES -->
+
+<?php if (!empty($_SESSION['success'])): ?>
+
+    <div class="alert success-alert">
+
+        <?= $_SESSION['success']; ?>
+
+    </div>
+
+    <?php unset($_SESSION['success']); ?>
+
+<?php endif; ?>
+
+
+<?php if (!empty($_SESSION['error'])): ?>
+
+    <div class="alert error-alert">
+
+        <?= $_SESSION['error']; ?>
+
+    </div>
+
+    <?php unset($_SESSION['error']); ?>
+
+<?php endif; ?>
+
 
 <br>
 
-<table class="modern-table" border="0" width="100%" cellpadding="12">
+<div class="table-container">
 
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>Full Name</th>
-            <th>Phone</th>
-            <th>Purpose</th>
-            <th>Status</th>
-            <th>Action</th>
-        </tr>
-    </thead>
+    <table class="modern-table">
 
-    <tbody>
-
-    <?php if (!empty($visitors)): ?>
-
-        <?php $count = 1; ?>
-
-        <?php foreach ($visitors as $visitor): ?>
-
-            <?php
-                $status = $attendanceModel->getStatus($visitor['id']);
-            ?>
+        <thead>
 
             <tr>
 
-                <!-- SAFE COUNTER (NO DB ID EXPOSED) -->
-                <td>
-                    <?= $count++; ?>
-                </td>
+                <th>#</th>
+                <th>Full Name</th>
+                <th>Phone</th>
+                <th>Purpose</th>
+                <th>Status</th>
+                <th>Action</th>
 
-                <td>
-                    <?= htmlspecialchars($visitor['full_name']); ?>
-                </td>
+            </tr>
 
-                <td>
-                    <?= htmlspecialchars($visitor['phone']); ?>
-                </td>
+        </thead>
 
-                <td>
-                    <?= htmlspecialchars($visitor['purpose']); ?>
-                </td>
+        <tbody>
 
-                <td>
-                    <?php if ($status === 'inside'): ?>
-                        <span class="badge badge-success">Inside</span>
-                    <?php else: ?>
-                        <span class="badge badge-danger">Outside</span>
-                    <?php endif; ?>
-                </td>
+        <?php if (!empty($visitors)): ?>
 
-                <td>
+            <?php $count = 1; ?>
 
-                    <?php if ($status === 'outside'): ?>
+            <?php foreach ($visitors as $visitor): ?>
 
-                        <form method="POST" action="index.php?page=checkin_visitor">
+                <tr>
 
-                            <input type="hidden" name="visitor_id" value="<?= $visitor['id']; ?>">
+                    <td>
+                        <?= $count++; ?>
+                    </td>
 
-                            <button type="submit" class="btn-success">
-                                Check In
-                            </button>
+                    <td>
+                        <?= htmlspecialchars($visitor['full_name']); ?>
+                    </td>
 
-                        </form>
+                    <td>
+                        <?= htmlspecialchars($visitor['phone']); ?>
+                    </td>
 
-                    <?php else: ?>
+                    <td>
+                        <?= htmlspecialchars($visitor['purpose']); ?>
+                    </td>
 
-                        <form method="POST" action="index.php?page=checkout_visitor">
+                    <td>
 
-                            <input type="hidden" name="visitor_id" value="<?= $visitor['id']; ?>">
+                        <?php if ($visitor['status'] === 'inside'): ?>
 
-                            <button type="submit" class="btn-danger">
-                                Check Out
-                            </button>
+                            <span class="badge badge-success">
+                                Inside
+                            </span>
 
-                        </form>
+                        <?php else: ?>
 
-                    <?php endif; ?>
+                            <span class="badge badge-danger">
+                                Outside
+                            </span>
+
+                        <?php endif; ?>
+
+                    </td>
+
+                    <td>
+
+                        <?php if ($visitor['status'] === 'outside'): ?>
+
+                            <form method="POST"
+                                  action="index.php?page=checkin_visitor">
+
+                                <input type="hidden"
+                                       name="visitor_id"
+                                       value="<?= $visitor['id']; ?>">
+
+                                <button type="submit"
+                                        class="btn-success">
+
+                                    Check In
+
+                                </button>
+
+                            </form>
+
+                        <?php else: ?>
+
+                            <form method="POST"
+                                  action="index.php?page=checkout_visitor">
+
+                                <input type="hidden"
+                                       name="visitor_id"
+                                       value="<?= $visitor['id']; ?>">
+
+                                <button type="submit"
+                                        class="btn-danger">
+
+                                    Check Out
+
+                                </button>
+
+                            </form>
+
+                        <?php endif; ?>
+
+                    </td>
+
+                </tr>
+
+            <?php endforeach; ?>
+
+        <?php else: ?>
+
+            <tr>
+
+                <td colspan="6" class="empty-state">
+
+                    No visitors found
 
                 </td>
 
             </tr>
 
-        <?php endforeach; ?>
+        <?php endif; ?>
 
-    <?php else: ?>
+        </tbody>
 
-        <tr>
-            <td colspan="6" style="text-align:center;">
-                No visitors found
-            </td>
-        </tr>
+    </table>
 
-    <?php endif; ?>
+</div>
 
-    </tbody>
+<style>
 
-</table>
-<script>
-function refreshVisitorStatus() {
-    fetch("index.php?page=visitors&ajax=1")
-        .then(res => res.text())
-        .then(html => {
-            document.querySelector("tbody").innerHTML = html;
-        });
+/*
+|--------------------------------------------------------------------------
+| PAGE HEADER
+|--------------------------------------------------------------------------
+*/
+
+.page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:15px;
+    margin-bottom:20px;
 }
 
-// refresh every 10 seconds
-setInterval(refreshVisitorStatus, 10000);
+.page-header h1{
+    margin:0;
+    color:#0f172a;
+}
+
+.page-subtitle{
+    margin-top:5px;
+    color:#64748b;
+}
+
+/*
+|--------------------------------------------------------------------------
+| TABLE
+|--------------------------------------------------------------------------
+*/
+
+.table-container{
+    background:white;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 5px 20px rgba(0,0,0,0.05);
+}
+
+.modern-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.modern-table thead{
+    background:#0f172a;
+    color:white;
+}
+
+.modern-table th{
+    padding:16px;
+    text-align:left;
+    font-size:14px;
+}
+
+.modern-table td{
+    padding:16px;
+    border-bottom:1px solid #e2e8f0;
+}
+
+.modern-table tr:hover{
+    background:#f8fafc;
+}
+
+/*
+|--------------------------------------------------------------------------
+| BADGES
+|--------------------------------------------------------------------------
+*/
+
+.badge{
+    padding:7px 12px;
+    border-radius:30px;
+    font-size:13px;
+    font-weight:600;
+}
+
+.badge-success{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.badge-danger{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+/*
+|--------------------------------------------------------------------------
+| BUTTONS
+|--------------------------------------------------------------------------
+*/
+
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-danger{
+    border:none;
+    padding:10px 16px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    text-decoration:none;
+    display:inline-block;
+    transition:0.2s;
+}
+
+.btn-primary{
+    background:#2563eb;
+    color:white;
+}
+
+.btn-primary:hover{
+    background:#1d4ed8;
+}
+
+.btn-secondary{
+    background:#e2e8f0;
+    color:#0f172a;
+}
+
+.btn-secondary:hover{
+    background:#cbd5e1;
+}
+
+.btn-success{
+    background:#16a34a;
+    color:white;
+}
+
+.btn-success:hover{
+    background:#15803d;
+}
+
+.btn-danger{
+    background:#dc2626;
+    color:white;
+}
+
+.btn-danger:hover{
+    background:#b91c1c;
+}
+
+/*
+|--------------------------------------------------------------------------
+| ALERTS
+|--------------------------------------------------------------------------
+*/
+
+.alert{
+    padding:14px 16px;
+    border-radius:10px;
+    margin-bottom:15px;
+    font-weight:500;
+}
+
+.success-alert{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.error-alert{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+/*
+|--------------------------------------------------------------------------
+| EMPTY STATE
+|--------------------------------------------------------------------------
+*/
+
+.empty-state{
+    text-align:center;
+    padding:30px;
+    color:#64748b;
+}
+
+/*
+|--------------------------------------------------------------------------
+| MOBILE
+|--------------------------------------------------------------------------
+*/
+
+@media(max-width:768px){
+
+    .page-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .modern-table{
+        font-size:14px;
+    }
+
+    .modern-table th,
+    .modern-table td{
+        padding:12px;
+    }
+}
+
+</style>
+
+<script>
+
+/*
+|--------------------------------------------------------------------------
+| AUTO HIDE ALERTS
+|--------------------------------------------------------------------------
+*/
+
+setTimeout(() => {
+
+    document.querySelectorAll('.alert').forEach(alert => {
+
+        alert.style.transition = "0.4s";
+        alert.style.opacity = "0";
+
+        setTimeout(() => {
+
+            alert.remove();
+
+        }, 400);
+
+    });
+
+}, 4000);
+
 </script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

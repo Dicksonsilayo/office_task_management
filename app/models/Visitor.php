@@ -2,68 +2,131 @@
 
 require_once __DIR__ . '/../configs/database.php';
 
-class Visitor {
-
+class Visitor
+{
     private $conn;
 
-    public function __construct() {
-
+    public function __construct()
+    {
         $this->conn = (new Database())->connect();
     }
 
-    public function autoCheckout()
-{
-    $stmt = $this->conn->prepare("
-        UPDATE visitor_attendance
-        SET check_out = NOW()
-        WHERE check_out IS NULL
-        AND check_in <= (NOW() - INTERVAL 12 HOUR)
-    ");
-
-    return $stmt->execute();
-}
-
     /*
     |--------------------------------------------------------------------------
-    | GET ALL VISITORS
+    | AUTO CHECKOUT
     |--------------------------------------------------------------------------
-    */public function getAll()
-{
-    $stmt = $this->conn->query("
-        SELECT 
-            visitors.*,
-            users.name AS visitor_name
-        FROM visitors
-        LEFT JOIN users ON users.id = visitors.user_id
-        ORDER BY visitors.created_at DESC
-    ");
+    */
 
-    return $stmt->fetch_all(MYSQLI_ASSOC);
+    public function autoCheckout()
+    {
+        $stmt = $this->conn->prepare("
+            UPDATE visitor_attendance
+            SET check_out = NOW()
+            WHERE check_out IS NULL
+            AND check_in <= (NOW() - INTERVAL 12 HOUR)
+        ");
+
+        return $stmt->execute();
+    }
+    public function getAll()
+{
+    $query = "
+        SELECT *
+        FROM visitors
+        ORDER BY created_at DESC
+    ";
+
+    $result = $this->conn->query($query);
+
+    return $result->fetch_all(MYSQLI_ASSOC);
 }
 public function getToday()
 {
     $stmt = $this->conn->query("
-        SELECT 
-            visitors.*,
-            users.name AS visitor_name
+        SELECT *
         FROM visitors
-        LEFT JOIN users ON users.id = visitors.user_id
-        WHERE DATE(visitors.created_at) = CURDATE()
-        ORDER BY visitors.created_at DESC
+        WHERE DATE(created_at) = CURDATE()
+        ORDER BY created_at DESC
     ");
 
     return $stmt->fetch_all(MYSQLI_ASSOC);
 }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET ALL VISITORS WITH STATUS
+    |--------------------------------------------------------------------------
+    */
+
+    public function getAllWithStatus()
+    {
+        $query = "
+            SELECT
+                v.*,
+
+                CASE
+                    WHEN va.check_out IS NULL
+                         AND va.id IS NOT NULL
+                    THEN 'inside'
+                    ELSE 'outside'
+                END AS status
+
+            FROM visitors v
+
+            LEFT JOIN visitor_attendance va
+                ON va.id = (
+                    SELECT id
+                    FROM visitor_attendance
+                    WHERE visitor_id = v.id
+                    ORDER BY id DESC
+                    LIMIT 1
+                )
+
+            ORDER BY v.id DESC
+        ";
+
+        $result = $this->conn->query($query);
+
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | CREATE VISITOR
     |--------------------------------------------------------------------------
     */
-    public function create($data) {
+
+    public function create($data)
+    {
+        /*
+        | Prevent duplicates using phone + name
+        */
+
+        $check = $this->conn->prepare("
+            SELECT id
+            FROM visitors
+            WHERE phone = ?
+            AND full_name = ?
+            LIMIT 1
+        ");
+
+        $check->bind_param(
+            "ss",
+            $data['phone'],
+            $data['full_name']
+        );
+
+        $check->execute();
+
+        $exists = $check->get_result();
+
+        if ($exists->num_rows > 0) {
+            return false;
+        }
 
         $stmt = $this->conn->prepare("
             INSERT INTO visitors(full_name, phone, purpose)
-            VALUES(?, ?, ?)
+            VALUES (?, ?, ?)
         ");
 
         $stmt->bind_param(
@@ -78,10 +141,38 @@ public function getToday()
 
     /*
     |--------------------------------------------------------------------------
+    | CHECK IF VISITOR INSIDE
+    |--------------------------------------------------------------------------
+    */
+
+    public function isInside($visitorId)
+    {
+        $stmt = $this->conn->prepare("
+            SELECT id
+            FROM visitor_attendance
+            WHERE visitor_id = ?
+            AND check_out IS NULL
+            LIMIT 1
+        ");
+
+        $stmt->bind_param("i", $visitorId);
+
+        $stmt->execute();
+
+        return $stmt->get_result()->num_rows > 0;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | CHECK IN
     |--------------------------------------------------------------------------
     */
-    public function checkIn($visitorId) {
+
+    public function checkIn($visitorId)
+    {
+        if ($this->isInside($visitorId)) {
+            return false;
+        }
 
         $stmt = $this->conn->prepare("
             INSERT INTO visitor_attendance(visitor_id, check_in)
@@ -98,8 +189,9 @@ public function getToday()
     | CHECK OUT
     |--------------------------------------------------------------------------
     */
-    public function checkOut($visitorId) {
 
+    public function checkOut($visitorId)
+    {
         $stmt = $this->conn->prepare("
             UPDATE visitor_attendance
             SET check_out = NOW()
@@ -112,73 +204,31 @@ public function getToday()
         return $stmt->execute();
     }
 
-    public function isInside($visitorId) {
-
-    $stmt = $this->conn->prepare("
-        SELECT id 
-        FROM visitor_attendance 
-        WHERE visitor_id = ? 
-        AND check_out IS NULL
-        LIMIT 1
-    ");
-
-    $stmt->bind_param("i", $visitorId);
-    $stmt->execute();
-
-    return $stmt->get_result()->num_rows > 0;
-}
-
     /*
     |--------------------------------------------------------------------------
     | ATTENDANCE HISTORY
     |--------------------------------------------------------------------------
     */
-    public function attendanceHistory() {
 
-        $result = $this->conn->query("
+    public function attendanceHistory()
+    {
+        $query = "
             SELECT
-                visitor_attendance.*,
-                visitors.full_name,
-                visitors.phone,
-                visitors.purpose
-            FROM visitor_attendance
+                va.*,
+                v.full_name,
+                v.phone,
+                v.purpose
 
-            JOIN visitors
-            ON visitors.id = visitor_attendance.visitor_id
+            FROM visitor_attendance va
 
-            ORDER BY visitor_attendance.id DESC
-        ");
+            INNER JOIN visitors v
+                ON v.id = va.visitor_id
+
+            ORDER BY va.id DESC
+        ";
+
+        $result = $this->conn->query($query);
+
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
-    public function getAllWithStatus()
-{
-    $query = "
-        SELECT 
-            v.*,
-
-            CASE
-                WHEN va.check_out IS NULL 
-                     AND va.check_in IS NOT NULL
-                THEN 'inside'
-                ELSE 'outside'
-            END AS status
-
-        FROM visitors v
-
-        LEFT JOIN visitor_attendance va
-            ON va.visitor_id = v.id
-
-        LEFT JOIN (
-            SELECT visitor_id, MAX(id) as latest_id
-            FROM visitor_attendance
-            GROUP BY visitor_id
-        ) latest
-            ON latest.latest_id = va.id
-
-        ORDER BY v.id DESC
-    ";
-
-    $result = $this->conn->query($query);
-
-    return $result->fetch_all(MYSQLI_ASSOC);
 }
-    }

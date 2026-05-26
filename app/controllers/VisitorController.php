@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../models/Visitor.php';
 require_once __DIR__ . '/../core/Auth.php';
+require_once __DIR__ . '/../core/Flash.php';
 
 class VisitorController
 {
@@ -12,101 +13,145 @@ class VisitorController
         $this->visitorModel = new Visitor();
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX
+    |--------------------------------------------------------------------------
+    */
+
     public function index()
     {
         Auth::requireLogin();
 
-        // AUTO CHECKOUT (important)
         $this->visitorModel->autoCheckout();
 
         $visitors = $this->visitorModel->getAllWithStatus();
 
-        if (isset($_GET['ajax'])) {
-            require __DIR__ . '/../views/visitors/partials/row.php';
-            exit;
-        }
-
         require __DIR__ . '/../views/visitors/index.php';
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE PAGE
+    |--------------------------------------------------------------------------
+    */
 
     public function create()
     {
         Auth::requireLogin();
+
         require __DIR__ . '/../views/visitors/create.php';
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | STORE VISITOR
+    |--------------------------------------------------------------------------
+    */
 
     public function store()
     {
         Auth::requireLogin();
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-            $full_name = trim($_POST['full_name']);
-            $phone     = preg_replace('/[^0-9]/', '', $_POST['phone']);
-            $purpose   = trim($_POST['purpose']);
-
-            if (strlen($full_name) > 150) {
-                $_SESSION['error'] = "Name too long";
-                header("Location: index.php?page=create_visitor");
-                exit;
-            }
-
-            if (strlen($purpose) > 150) {
-                $_SESSION['error'] = "Purpose too long";
-                header("Location: index.php?page=create_visitor");
-                exit;
-            }
-
-            if (strlen($phone) < 10 || strlen($phone) > 13) {
-                $_SESSION['error'] = "Invalid phone number";
-                header("Location: index.php?page=create_visitor");
-                exit;
-            }
-
-            $this->visitorModel->create([
-                'full_name' => $full_name,
-                'phone'     => $phone,
-                'purpose'   => $purpose
-            ]);
-
-            $_SESSION['success'] = "Visitor added successfully";
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header("Location: index.php?page=visitors");
             exit;
         }
-    }
 
-    public function checkIn()
-{
-    Auth::requireLogin();
+        $full_name = trim($_POST['full_name']);
+        $phone     = preg_replace('/[^0-9]/', '', $_POST['phone']);
+        $purpose   = trim($_POST['purpose']);
 
-    $visitorId = (int) $_POST['visitor_id'];
+        if (empty($full_name) || empty($phone) || empty($purpose)) {
 
-    if ($this->visitorModel->isInside($visitorId)) {
-        $_SESSION['error'] = "Visitor already inside";
+            Flash::set('error', 'All fields are required');
+
+            header("Location: index.php?page=create_visitor");
+            exit;
+        }
+
+        if (strlen($phone) < 10 || strlen($phone) > 13) {
+
+            Flash::set('error', 'Invalid phone number');
+
+            header("Location: index.php?page=create_visitor");
+            exit;
+        }
+
+        $created = $this->visitorModel->create([
+            'full_name' => $full_name,
+            'phone' => $phone,
+            'purpose' => $purpose
+        ]);
+
+        if (!$created) {
+
+            Flash::set('error', 'Visitor already exists');
+
+            header("Location: index.php?page=create_visitor");
+            exit;
+        }
+
+        Flash::set('success', 'Visitor registered successfully');
+
         header("Location: index.php?page=visitors");
         exit;
     }
 
-    $this->visitorModel->checkIn($visitorId);
+    /*
+    |--------------------------------------------------------------------------
+    | CHECK IN
+    |--------------------------------------------------------------------------
+    */
 
-    $_SESSION['success'] = "Visitor checked in";
-    header("Location: index.php?page=visitors");
-    exit;
-}
+    public function checkIn()
+    {
+        Auth::requireLogin();
 
-public function checkOut()
-{
-    Auth::requireLogin();
+        $visitorId = (int) $_POST['visitor_id'];
 
-    $visitorId = (int) $_POST['visitor_id'];
+        if ($this->visitorModel->isInside($visitorId)) {
 
-    $this->visitorModel->checkOut($visitorId);
+            Flash::set('error', 'Visitor already inside');
 
-    $_SESSION['success'] = "Visitor checked out";
-    header("Location: index.php?page=visitors");
-    exit;
-}
- 
+            header("Location: index.php?page=visitors");
+            exit;
+        }
+
+        $this->visitorModel->checkIn($visitorId);
+
+        Flash::set('success', 'Visitor checked in successfully');
+
+        header("Location: index.php?page=visitors");
+        exit;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CHECK OUT
+    |--------------------------------------------------------------------------
+    */
+
+    public function checkOut()
+    {
+        Auth::requireLogin();
+
+        $visitorId = (int) $_POST['visitor_id'];
+
+        $this->visitorModel->checkOut($visitorId);
+
+        Flash::set('success', 'Visitor checked out successfully');
+
+        header("Location: index.php?page=visitors");
+        exit;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | HISTORY
+    |--------------------------------------------------------------------------
+    */
+
     public function history()
     {
         Auth::requireLogin();

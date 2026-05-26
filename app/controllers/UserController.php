@@ -99,6 +99,13 @@
         header("Location: index.php?page=create_user");
         exit;
     }
+  if ($this->userModel->emailExists($email)) {
+
+    Flash::set('error', 'This email is already used');
+
+    header("Location: index.php?page=create_user");
+    exit;
+}
 
     if (strlen($password) < 6 || strlen($password) > 50) {
         Flash::set('error','Password must be 6–50 characters');

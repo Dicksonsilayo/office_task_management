@@ -24,6 +24,7 @@ class DashboardController
             'totalUsers' => count($userModel->getAll()),
             'totalTasks' => count($taskModel->getAllByRole($authUser)),
             'totalVisitors' => count($visitorModel->getAll()),
+            // 'totalVisitors' => count($visitorModel->getAllWithStatus()),
         ];
 
         $roles = $authUser['roles'] ?? [];
